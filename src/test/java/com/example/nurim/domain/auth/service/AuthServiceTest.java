@@ -1,6 +1,7 @@
 package com.example.nurim.domain.auth.service;
 
 import com.example.nurim.config.JwtUtil;
+import com.example.nurim.domain.auth.dto.request.SigninRequest;
 import com.example.nurim.domain.auth.dto.request.SignupRequest;
 import com.example.nurim.domain.auth.dto.response.AuthResponse;
 import com.example.nurim.domain.auth.exception.AuthException;
@@ -15,11 +16,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @TestClassOrder(ClassOrderer.OrderAnnotation.class)
 @ExtendWith(MockitoExtension.class)
@@ -75,6 +77,57 @@ class AuthServiceTest {
             AuthResponse response = authService.signup(request);
 
             verify(userRepository, times(1)).save(any(User.class));
+            assertNotNull(response);
+            assertEquals(token, response.getBearerToken());
+        }
+    }
+
+    @Nested
+    @Order(2)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    class SignInTests {
+
+        private final SigninRequest request = new SigninRequest("temp@gmail.com", "password");
+
+        @Test
+        @Order(1)
+        void 로그인_존재하지_않는_이메일이면_실패() {
+            given(userRepository.findByEmailAndDeletedAtIsNull(anyString())).willReturn(Optional.empty());
+
+            AuthException thrown = assertThrows(AuthException.class, () -> authService.signin(request));
+            assertEquals(HttpStatus.BAD_REQUEST, thrown.getStatus());
+            assertEquals("No account found with this email", thrown.getMessage());
+        }
+
+        @Test
+        @Order(2)
+        void 로그인_비밀번호가_일치하지_않으면_실패() {
+            String encodedPassword = "encodedPassword";
+
+            User user = new User(request.getEmail(), encodedPassword, "name");
+
+            given(userRepository.findByEmailAndDeletedAtIsNull(anyString())).willReturn(Optional.of(user));
+            given(passwordEncoder.matches(anyString(), anyString())).willReturn(false);
+
+            AuthException thrown = assertThrows(AuthException.class, () -> authService.signin(request));
+            assertEquals(HttpStatus.BAD_REQUEST, thrown.getStatus());
+            assertEquals("Invalid password", thrown.getMessage());
+        }
+
+        @Test
+        @Order(3)
+        void 로그인_성공() {
+            String encodedPassword = "encodedPassword";
+            String token = "testToken";
+
+            User user = new User(request.getEmail(), encodedPassword, "name");
+
+            given(userRepository.findByEmailAndDeletedAtIsNull(anyString())).willReturn(Optional.of(user));
+            given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
+            given(jwtUtil.createToken(any(), anyString(), anyString(), any(UserRole.class))).willReturn(token);
+
+            AuthResponse response = authService.signin(request);
+
             assertNotNull(response);
             assertEquals(token, response.getBearerToken());
         }

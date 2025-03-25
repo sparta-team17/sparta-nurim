@@ -1,6 +1,7 @@
 package com.example.nurim.domain.auth.service;
 
 import com.example.nurim.config.JwtUtil;
+import com.example.nurim.domain.auth.dto.request.SigninRequest;
 import com.example.nurim.domain.auth.dto.request.SignupRequest;
 import com.example.nurim.domain.auth.dto.response.AuthResponse;
 import com.example.nurim.domain.auth.exception.AuthException;
@@ -32,6 +33,16 @@ public class AuthService {
         return new AuthResponse(token);
     }
 
+    public AuthResponse signin( SigninRequest request) {
+        User user = userRepository.findByEmailAndDeletedAtIsNull(request.getEmail())
+                .orElseThrow(() -> new AuthException(HttpStatus.BAD_REQUEST, "No account found with this email"));
+
+        validatePassword(request.getPassword(), user.getPassword());
+
+        String token = jwtUtil.createToken(user.getId(), user.getEmail(), user.getName(), user.getRole());
+        return new AuthResponse(token);
+    }
+
     private void validateEmailInUse(String email) {
         if (userRepository.existsByEmailAndDeletedAtIsNull(email)) {
             throw new AuthException(HttpStatus.BAD_REQUEST, "This email is already in use");
@@ -41,6 +52,12 @@ public class AuthService {
     private void validateDeletedAccount(String email) {
         if (userRepository.existsByEmailAndDeletedAtIsNotNull(email)) {
             throw new AuthException(HttpStatus.BAD_REQUEST, "This account has been deleted");
+        }
+    }
+
+    private void validatePassword(String inputPassword, String storedPassword) {
+        if (!passwordEncoder.matches(inputPassword, storedPassword)) {
+            throw new AuthException(HttpStatus.BAD_REQUEST, "Invalid password");
         }
     }
 }

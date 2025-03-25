@@ -1,5 +1,6 @@
 package com.example.nurim.domain.auth.controller;
 
+import com.example.nurim.domain.auth.dto.request.SigninRequest;
 import com.example.nurim.domain.auth.dto.request.SignupRequest;
 import com.example.nurim.domain.auth.dto.response.AuthResponse;
 import com.example.nurim.domain.auth.service.AuthService;
@@ -20,5 +21,10 @@ public class AuthController {
     @PostMapping("/signup")
     public AuthResponse signup(@RequestBody @Valid SignupRequest request) {
         return authService.signup(request);
+    }
+
+    @PostMapping("/signin")
+    public AuthResponse signin(@RequestBody @Valid SigninRequest request) {
+        return authService.signin(request);
     }
 }
