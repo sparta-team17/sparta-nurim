@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -27,6 +28,7 @@ public class User extends Timestamped {
     private String password;
 
     @Column(nullable = false)
+    @Setter
     private String name;
 
     @Enumerated(EnumType.STRING)
