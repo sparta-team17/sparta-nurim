@@ -1,5 +1,6 @@
 package com.example.nurim.domain.review.entity;
 
+import com.example.nurim.domain.common.entity.Timestamped;
 import com.example.nurim.domain.program.entity.Program;
 import com.example.nurim.domain.user.entity.User;
 import jakarta.persistence.*;
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
 @Entity
 @NoArgsConstructor
 @Table(name = "reviews")
-public class Review {
+public class Review extends Timestamped {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

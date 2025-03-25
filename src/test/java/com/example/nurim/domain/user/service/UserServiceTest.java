@@ -1,6 +1,8 @@
 package com.example.nurim.domain.user.service;
 
 import com.example.nurim.domain.application.repository.ApplicationRepository;
+import com.example.nurim.domain.review.dto.response.UserReviewResponse;
+import com.example.nurim.domain.review.repository.ReviewRepository;
 import com.example.nurim.domain.user.dto.request.UpdateNameRequest;
 import com.example.nurim.domain.user.dto.request.UpdatePasswordRequest;
 import com.example.nurim.domain.user.entity.User;
@@ -11,12 +13,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 
 @TestClassOrder(ClassOrderer.OrderAnnotation.class)
@@ -28,6 +33,8 @@ class UserServiceTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private ApplicationRepository applicationRepository;
+    @Mock
+    private ReviewRepository reviewRepository;
     @InjectMocks
     private UserService userService;
 
@@ -125,6 +132,33 @@ class UserServiceTest {
             userService.deleteUser(1L);
 
             assertNotNull(user.getDeletedAt());
+        }
+    }
+
+    @Nested
+    @Order(4)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    class FindReviewsTests {
+        @Test
+        @Order(1)
+        void 사용자_리뷰_조회_성공() {
+            LocalDateTime now = LocalDateTime.now();
+            List<UserReviewResponse> userReviewResponseList = List.of(
+                    new UserReviewResponse(1L, "review1", 5.0, now, 1L, "program1", null),
+                    new UserReviewResponse(2L, "review2", 4.5, now, 2L, "program2", null)
+            );
+            Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
+            PageImpl<UserReviewResponse> userReviewResponsePage = new PageImpl<>(userReviewResponseList, pageable, userReviewResponseList.size());
+
+            given(reviewRepository.findActiveByUserId(anyLong(), any(Pageable.class))).willReturn(userReviewResponsePage);
+
+            Page<UserReviewResponse> result = userService.findReviews(1L, 1, 10);
+
+            assertNotNull(result);
+            assertEquals(userReviewResponsePage.getTotalElements(), result.getTotalElements());
+            assertEquals(userReviewResponsePage.getTotalPages(), result.getTotalPages());
+            assertEquals(userReviewResponsePage.getNumber(), result.getNumber());
+            assertEquals(userReviewResponsePage.getSize(), result.getSize());
         }
     }
 }
