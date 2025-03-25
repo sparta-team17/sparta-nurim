@@ -1,5 +1,6 @@
 package com.example.nurim.domain.program.entity;
 
+import com.example.nurim.domain.common.entity.Timestamped;
 import com.example.nurim.domain.program.enums.ProgramStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Table(name = "programs")
-public class Program {
+public class Program extends Timestamped {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -49,11 +50,6 @@ public class Program {
     @Column(name = "registration_end_date", nullable = false)
     private LocalDateTime registrationEndDate;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
@@ -88,13 +84,11 @@ public class Program {
         this.registrationStartDate = registrationStartDate;
         this.registrationEndDate = registrationEndDate;
         this.phone = phone;
-        this.updatedAt = LocalDateTime.now();
     }
 
     // 프로그램 상태값만 수정
     public void updateStatus(ProgramStatus status){
         this.status = status;
-        this.updatedAt = LocalDateTime.now();
     }
 
     // 소프트 딜리트
