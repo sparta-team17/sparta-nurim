@@ -18,6 +18,7 @@ public class NoticeResponseDto {
     private String contents;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime deleteAt;
 
     public static NoticeResponseDto fromEntity(Notice notice){
         return NoticeResponseDto.builder()
@@ -28,6 +29,7 @@ public class NoticeResponseDto {
                 .contents(notice.getContents())
                 .createdAt(notice.getCreatedAt())
                 .updatedAt(notice.getUpdatedAt())
+                .deleteAt(notice.getDeletedAt())
                 .build();
     }
 }

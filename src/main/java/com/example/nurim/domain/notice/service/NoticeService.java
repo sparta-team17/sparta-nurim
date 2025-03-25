@@ -41,4 +41,20 @@ public class NoticeService {
         noticeRepository.flush();
         return NoticeResponseDto.fromEntity(notice);
     }
+
+    @Transactional
+    public NoticeResponseDto deleteNotice(Long userId, Long noticeId) {
+        Notice notice = noticeRepository.findById(noticeId)
+                .orElseThrow(()-> new InvalidRequestException("존재하지 않는 공지사항입니다."));
+
+        if(!notice.getUser().getId().equals(userId)){
+            throw new UnauthorizedException("작성자만 삭제할 수 있습니다.");
+        }
+
+        if(notice.getDeletedAt() != null){
+            throw new InvalidRequestException("이미 삭제된 공지사항입니다.");
+        }
+        notice.setDeletedAt();
+        return NoticeResponseDto.fromEntity(notice);
+    }
 }

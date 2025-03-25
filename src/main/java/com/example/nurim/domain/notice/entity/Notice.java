@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Entity
 @NoArgsConstructor
@@ -23,6 +25,8 @@ public class Notice extends Timestamped {
     @JoinColumn(name = "user_id")
     private User user;
 
+    private LocalDateTime deletedAt;
+
     public Notice(String title, String contents, User user) {
         this.title = title;
         this.contents = contents;
@@ -36,5 +40,9 @@ public class Notice extends Timestamped {
         if(contents != null){
             this.contents = contents;
         }
+    }
+
+    public void setDeletedAt(){
+        this.deletedAt = LocalDateTime.now();
     }
 }
