@@ -1,7 +1,9 @@
 package com.example.nurim.domain.user.controller;
 
+import com.example.nurim.domain.application.dto.response.UserApplicationResponse;
 import com.example.nurim.domain.common.dto.AuthUser;
 import com.example.nurim.domain.review.dto.response.UserReviewResponse;
+import com.example.nurim.domain.user.dto.request.FindApplicationRequest;
 import com.example.nurim.domain.user.dto.request.UpdateNameRequest;
 import com.example.nurim.domain.user.dto.request.UpdatePasswordRequest;
 import com.example.nurim.domain.user.service.UserService;
@@ -53,5 +55,16 @@ public class UserController {
             @RequestParam(defaultValue = DEFAULT_SIZE) @Min(1) Integer size
     ) {
         return userService.findReviews(authUser.getId(), page, size);
+    }
+
+    @Secured(ROLE_USER)
+    @GetMapping("/applications")
+    public Page<UserApplicationResponse> findApplications(
+            @AuthenticationPrincipal AuthUser authUser,
+            @RequestParam(defaultValue = FIRST_PAGE) @Min(1) Integer page,
+            @RequestParam(defaultValue = DEFAULT_SIZE) @Min(1) Integer size,
+            @ModelAttribute FindApplicationRequest request
+    ) {
+        return userService.findApplications(authUser.getId(), page, size, request);
     }
 }

@@ -1,8 +1,10 @@
 package com.example.nurim.domain.user.service;
 
+import com.example.nurim.domain.application.dto.response.UserApplicationResponse;
 import com.example.nurim.domain.application.repository.ApplicationRepository;
 import com.example.nurim.domain.review.dto.response.UserReviewResponse;
 import com.example.nurim.domain.review.repository.ReviewRepository;
+import com.example.nurim.domain.user.dto.request.FindApplicationRequest;
 import com.example.nurim.domain.user.dto.request.UpdateNameRequest;
 import com.example.nurim.domain.user.dto.request.UpdatePasswordRequest;
 import com.example.nurim.domain.user.entity.User;
@@ -23,6 +25,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 
 @TestClassOrder(ClassOrderer.OrderAnnotation.class)
 @ExtendWith(MockitoExtension.class)
@@ -153,6 +156,37 @@ class UserServiceTest {
             given(reviewRepository.findActiveByUserId(anyLong(), any(Pageable.class))).willReturn(userReviewResponsePage);
 
             Page<UserReviewResponse> result = userService.findReviews(1L, 1, 10);
+
+            assertNotNull(result);
+            assertEquals(userReviewResponsePage.getTotalElements(), result.getTotalElements());
+            assertEquals(userReviewResponsePage.getTotalPages(), result.getTotalPages());
+            assertEquals(userReviewResponsePage.getNumber(), result.getNumber());
+            assertEquals(userReviewResponsePage.getSize(), result.getSize());
+        }
+    }
+
+    @Nested
+    @Order(5)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    class FindApplicationsTests {
+        @Test
+        @Order(1)
+        void 사용자_신청정보_조회_성공() {
+            FindApplicationRequest request = mock(FindApplicationRequest.class);
+
+            LocalDateTime createdAt = LocalDateTime.now();
+            LocalDateTime usageDateTime = createdAt.plusDays(10);
+            List<UserApplicationResponse> userApplicationResponseList = List.of(
+                    new UserApplicationResponse(1L, createdAt, usageDateTime, 1L, "program1", null),
+                    new UserApplicationResponse(2L, createdAt, usageDateTime,2L, "program2", null)
+            );
+            Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
+            Page<UserApplicationResponse> userReviewResponsePage = new PageImpl<>(userApplicationResponseList, pageable, userApplicationResponseList.size());
+
+            given(applicationRepository.findByUserId(anyLong(), any(FindApplicationRequest.class), any(Pageable.class)))
+                    .willReturn(userReviewResponsePage);
+
+            Page<UserApplicationResponse> result = userService.findApplications(1L, 1, 10, request);
 
             assertNotNull(result);
             assertEquals(userReviewResponsePage.getTotalElements(), result.getTotalElements());
