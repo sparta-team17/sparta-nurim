@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +21,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
+    @Transactional
     public AuthResponse signup(SignupRequest request) {
         validateEmailInUse(request.getEmail());
         validateDeletedAccount(request.getEmail());
@@ -33,6 +35,7 @@ public class AuthService {
         return new AuthResponse(token);
     }
 
+    @Transactional(readOnly = true)
     public AuthResponse signin( SigninRequest request) {
         User user = userRepository.findByEmailAndDeletedAtIsNull(request.getEmail())
                 .orElseThrow(() -> new AuthException(HttpStatus.BAD_REQUEST, "No account found with this email"));
