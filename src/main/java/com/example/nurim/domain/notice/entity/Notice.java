@@ -22,4 +22,10 @@ public class Notice extends Timestamped {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    public Notice(String title, String contents, User user) {
+        this.title = title;
+        this.contents = contents;
+        this.user = user;
+    }
 }
