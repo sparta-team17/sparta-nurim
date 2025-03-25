@@ -1,5 +1,6 @@
 package com.example.nurim.domain.user.service;
 
+import com.example.nurim.domain.application.repository.ApplicationRepository;
 import com.example.nurim.domain.user.dto.request.UpdateNameRequest;
 import com.example.nurim.domain.user.dto.request.UpdatePasswordRequest;
 import com.example.nurim.domain.user.entity.User;
@@ -13,8 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -26,6 +26,8 @@ class UserServiceTest {
     private UserRepository userRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private ApplicationRepository applicationRepository;
     @InjectMocks
     private UserService userService;
 
@@ -93,6 +95,36 @@ class UserServiceTest {
             userService.updatePassword(1L, request);
 
             assertEquals(newEncodedPassword, user.getPassword());
+        }
+    }
+
+    @Nested
+    @Order(3)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    class DeleteUserTests {
+
+        private final User user = new User("temp@gmail.com", "encodedPassword", "name");
+
+        @Test
+        @Order(1)
+        void 회원탈퇴_사용하지_않은_신청정보_존재_실패() {
+            given(userRepository.findActiveByIdOrElseThrow(anyLong())).willReturn(user);
+            given(applicationRepository.existsUnusedApplicationByUserId(anyLong())).willReturn(true);
+
+            UserException thrown = assertThrows(UserException.class, () -> userService.deleteUser(1L));
+            assertEquals(HttpStatus.BAD_REQUEST, thrown.getStatus());
+            assertEquals("Unused application exists, account deletion is not allowed", thrown.getMessage());
+        }
+
+        @Test
+        @Order(2)
+        void 회원탈퇴_성공() {
+            given(userRepository.findActiveByIdOrElseThrow(anyLong())).willReturn(user);
+            given(applicationRepository.existsUnusedApplicationByUserId(anyLong())).willReturn(false);
+
+            userService.deleteUser(1L);
+
+            assertNotNull(user.getDeletedAt());
         }
     }
 }

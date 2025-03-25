@@ -42,4 +42,8 @@ public class User extends Timestamped {
         this.password = password;
         this.name = name;
     }
+
+    public void setDeleted() {
+        this.deletedAt = LocalDateTime.now();
+    }
 }

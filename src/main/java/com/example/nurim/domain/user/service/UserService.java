@@ -1,5 +1,6 @@
 package com.example.nurim.domain.user.service;
 
+import com.example.nurim.domain.application.repository.ApplicationRepository;
 import com.example.nurim.domain.user.dto.request.UpdateNameRequest;
 import com.example.nurim.domain.user.dto.request.UpdatePasswordRequest;
 import com.example.nurim.domain.user.entity.User;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final ApplicationRepository applicationRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
@@ -34,6 +36,13 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
     }
 
+    @Transactional
+    public void deleteUser(Long userId) {
+        User user = userRepository.findActiveByIdOrElseThrow(userId);
+        validateNoUnusedApplications(userId);
+        user.setDeleted();
+    }
+
     private void validateCurrentPassword(String inputPassword, String currentPassword) {
         if (!passwordEncoder.matches(inputPassword, currentPassword)) {
             throw new UserException(HttpStatus.BAD_REQUEST, "Current password is incorrect");
@@ -43,6 +52,12 @@ public class UserService {
     private void validateNewPassword(String newPassword, String currentPassword) {
         if (newPassword.equals(currentPassword)) {
             throw new UserException(HttpStatus.BAD_REQUEST, "New password cannot be the same as the current password");
+        }
+    }
+
+    private void validateNoUnusedApplications(Long userId) {
+        if (applicationRepository.existsUnusedApplicationByUserId(userId)) {
+            throw new UserException(HttpStatus.BAD_REQUEST, "Unused application exists, account deletion is not allowed");
         }
     }
 }

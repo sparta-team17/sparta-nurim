@@ -7,10 +7,7 @@ import com.example.nurim.domain.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/users")
@@ -33,5 +30,10 @@ public class UserController {
             @Valid @RequestBody UpdatePasswordRequest request
     ) {
         userService.updatePassword(authUser.getId(), request);
+    }
+
+    @DeleteMapping
+    public void deleteUser(@AuthenticationPrincipal AuthUser authUser) {
+        userService.deleteUser(authUser.getId());
     }
 }
