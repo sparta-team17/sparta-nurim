@@ -24,4 +24,10 @@ public class ProgramDate extends Timestamped {
     private Integer count;
 
     private LocalDateTime date;
+
+    public ProgramDate(Program program, LocalDateTime date) {
+        this.program = program;
+        this.date = date;
+        this.count = 0; // 초기 신청자 수를 0으로 설정
+    }
 }
