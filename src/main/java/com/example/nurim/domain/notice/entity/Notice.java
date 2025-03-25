@@ -28,4 +28,13 @@ public class Notice extends Timestamped {
         this.contents = contents;
         this.user = user;
     }
+
+    public void updateNotice(String title,String contents){
+        if(title != null){
+            this.title = title;
+        }
+        if(contents != null){
+            this.contents = contents;
+        }
+    }
 }
