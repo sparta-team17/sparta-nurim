@@ -28,12 +28,12 @@ public class User extends Timestamped {
     @Setter
     private String password;
 
-    @Column(nullable = false)
     @Setter
+    @Column(nullable = false, length = 100)
     private String name;
 
     @Enumerated(EnumType.STRING)
-    private UserRole userRole = UserRole.ROLE_USER;
+    private UserRole role = UserRole.ROLE_USER;
 
     private LocalDateTime deletedAt;
 
