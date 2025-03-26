@@ -1,8 +1,12 @@
 package com.example.nurim.domain.review.entity;
 
+import com.example.nurim.domain.common.entity.Timestamped;
 import com.example.nurim.domain.program.entity.Program;
 import com.example.nurim.domain.user.entity.User;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -12,13 +16,15 @@ import java.time.LocalDateTime;
 @Entity
 @NoArgsConstructor
 @Table(name = "reviews")
-public class Review {
+public class Review extends Timestamped {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
+    @Min(0)
+    @Max(5)
     private double rating;
 
     @Column(nullable = false)
@@ -34,11 +40,21 @@ public class Review {
 
     private LocalDateTime deletedAt;
 
+    @Builder
     public Review(double rating, String contents, User user, Program program, LocalDateTime deletedAt) {
         this.rating = rating;
         this.contents = contents;
         this.user = user;
         this.program = program;
         this.deletedAt = deletedAt;
+    }
+
+    public void updateReview(double rating, String contents) {
+        this.rating = rating;
+        this.contents = contents;
+    }
+
+    public void deleteReview() {
+        this.deletedAt = LocalDateTime.now();
     }
 }
