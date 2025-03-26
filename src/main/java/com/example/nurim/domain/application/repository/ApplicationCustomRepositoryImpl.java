@@ -30,6 +30,7 @@ public class ApplicationCustomRepositoryImpl implements ApplicationCustomReposit
                 .select(Projections.constructor(UserApplicationResponse.class,
                         application.id,
                         application.createdAt,
+                        application.status,
                         programDate.date,
                         program.id,
                         program.title,
