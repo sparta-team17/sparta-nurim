@@ -1,6 +1,7 @@
 package com.example.nurim.domain.user.controller;
 
 import com.example.nurim.domain.application.dto.response.UserApplicationResponse;
+import com.example.nurim.domain.common.annotation.HasUserRole;
 import com.example.nurim.domain.common.dto.AuthUser;
 import com.example.nurim.domain.review.dto.response.UserReviewResponse;
 import com.example.nurim.domain.user.dto.request.FindApplicationRequest;
@@ -11,7 +12,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +22,6 @@ public class UserController {
 
     private static final String FIRST_PAGE = "1";
     private static final String DEFAULT_SIZE = "10";
-    private static final String ROLE_USER = "ROLE_USER";
 
     private final UserService userService;
 
@@ -47,7 +46,7 @@ public class UserController {
         userService.deleteUser(authUser.getId());
     }
 
-    @Secured(ROLE_USER)
+    @HasUserRole
     @GetMapping("/reviews")
     public Page<UserReviewResponse> findReviews(
             @AuthenticationPrincipal AuthUser authUser,
@@ -57,7 +56,7 @@ public class UserController {
         return userService.findReviews(authUser.getId(), page, size);
     }
 
-    @Secured(ROLE_USER)
+    @HasUserRole
     @GetMapping("/applications")
     public Page<UserApplicationResponse> findApplications(
             @AuthenticationPrincipal AuthUser authUser,
