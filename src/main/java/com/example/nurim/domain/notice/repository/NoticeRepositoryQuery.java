@@ -1,10 +1,10 @@
 package com.example.nurim.domain.notice.repository;
 
 import com.example.nurim.domain.notice.dto.response.NoticeResponseDto;
-import com.example.nurim.domain.notice.entity.Notice;
+import com.example.nurim.domain.notice.dto.response.NoticeSearchResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface NoticeRepository extends JpaRepository<Notice,Long>, NoticeRepositoryQuery {
+public interface NoticeRepositoryQuery {
+    Page<NoticeSearchResponseDto> findNotices(String keyword, Pageable pageable);
 }
