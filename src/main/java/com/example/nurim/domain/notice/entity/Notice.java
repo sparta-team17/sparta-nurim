@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Entity
 @NoArgsConstructor
@@ -22,4 +24,25 @@ public class Notice extends Timestamped {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    private LocalDateTime deletedAt;
+
+    public Notice(String title, String contents, User user) {
+        this.title = title;
+        this.contents = contents;
+        this.user = user;
+    }
+
+    public void updateNotice(String title,String contents){
+        if(title != null){
+            this.title = title;
+        }
+        if(contents != null){
+            this.contents = contents;
+        }
+    }
+
+    public void setDeletedAt(){
+        this.deletedAt = LocalDateTime.now();
+    }
 }
