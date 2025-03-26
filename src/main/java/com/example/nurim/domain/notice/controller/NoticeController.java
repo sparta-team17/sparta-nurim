@@ -5,6 +5,7 @@ import com.example.nurim.domain.notice.dto.request.NoticeRequestDto;
 import com.example.nurim.domain.notice.dto.response.NoticeResponseDto;
 import com.example.nurim.domain.notice.dto.response.NoticeSearchResponseDto;
 import com.example.nurim.domain.notice.service.NoticeService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -18,7 +19,7 @@ public class NoticeController {
     private final NoticeService noticeService;
 
     @PostMapping("/admin/notices")
-    public ResponseEntity<NoticeResponseDto> createNotice(@RequestBody NoticeRequestDto requestDto,
+    public ResponseEntity<NoticeResponseDto> createNotice(@RequestBody @Valid NoticeRequestDto requestDto,
                                                           @AuthenticationPrincipal AuthUser authUser
                                                           ){
         return new ResponseEntity<>(noticeService.createNotice(authUser.getId(), requestDto.getTitle(), requestDto.getContents()), HttpStatus.CREATED);
@@ -26,7 +27,7 @@ public class NoticeController {
 
     @PatchMapping("/admin/notices/{noticeId}")
     public ResponseEntity<NoticeResponseDto> updateNotice(@PathVariable Long noticeId,
-                                                          @RequestBody NoticeRequestDto requestDto,
+                                                          @RequestBody @Valid NoticeRequestDto requestDto,
                                                           @AuthenticationPrincipal AuthUser authUser){
         return ResponseEntity.ok(noticeService.updateNotice(authUser.getId(), noticeId, requestDto.getTitle(), requestDto.getContents()));
     }

@@ -41,6 +41,10 @@ public class NoticeService {
             throw new UnauthorizedException("작성자만 수정할 수 있습니다.");
         }
 
+        if(notice.getDeletedAt() != null){
+            throw new InvalidRequestException("삭제된 공지사항은 수정할 수 없습니다.");
+        }
+
         notice.updateNotice(title, contents);
         noticeRepository.flush();
         return NoticeResponseDto.fromEntity(notice);

@@ -35,7 +35,8 @@ public class NoticeRepositoryQueryImpl implements NoticeRepositoryQuery{
                 .from(notice)
                 .leftJoin(user).on(user.eq(notice.user))
                 .where(
-                        titleContains(keyword)
+                        titleContains(keyword),
+                        notice.deletedAt.isNull()
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())

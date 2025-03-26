@@ -156,6 +156,38 @@ class NoticeServiceTest {
 
             assertEquals("작성자만 수정할 수 있습니다.", exception.getMessage());
         }
+
+        @Test
+        void 공지사항_업데이트_삭제된_공지사항(){
+            Long userId = 1L;
+            Long noticeId = 1L;
+            String email = "a@test.com";
+            String password = "1234";
+            String name = "이름";
+            String title = "제목";
+            String contents = "내용";
+            String updatedTitle = "수정된 제목";
+            String updatedContents = null;
+            LocalDateTime deletedAt = LocalDateTime.now();
+
+            User user = new User(email, password, name);
+            ReflectionTestUtils.setField(user, "id", userId);
+
+            Notice notice = new Notice();
+            ReflectionTestUtils.setField(notice, "id", noticeId);
+            ReflectionTestUtils.setField(notice, "user", user);
+            ReflectionTestUtils.setField(notice, "title", title);
+            ReflectionTestUtils.setField(notice, "contents", contents);
+            ReflectionTestUtils.setField(notice,"deletedAt", deletedAt);
+
+            given(noticeRepository.findById(anyLong())).willReturn(Optional.of(notice));
+
+            InvalidRequestException exception = assertThrows(InvalidRequestException.class,()->{
+               noticeService.updateNotice(userId, noticeId, updatedTitle, updatedContents);
+            });
+
+            assertEquals("삭제된 공지사항은 수정할 수 없습니다.",exception.getMessage());
+        }
     }
 
     @Nested
