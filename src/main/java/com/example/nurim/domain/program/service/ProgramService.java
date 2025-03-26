@@ -12,12 +12,15 @@ import com.example.nurim.domain.program.repository.CategoryRepository;
 import com.example.nurim.domain.program.repository.ProgramDateRepository;
 import com.example.nurim.domain.program.repository.ProgramRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,13 +34,12 @@ public class ProgramService {
 
   // 프로그램 등록
   @Transactional
-  public ProgramResponseDto createProgram(String title, String location, Long categoryId, ProgramStatus status, Long quota, String detail,
-                                          LocalDateTime usageStartDate, LocalDateTime usageEndDate, List<LocalDateTime> usageDates, LocalDateTime registrationStartDate, LocalDateTime registrationEndDate, String phone) {
+  public ProgramResponseDto createProgram(String title, String location, Long categoryId, ProgramStatus status, Long quota, String detail, List<LocalDateTime> usageDates, LocalDateTime registrationStartDate, LocalDateTime registrationEndDate, String phone) {
 
     Category findCategory = categoryRepository.findById(categoryId)
         .orElseThrow(() -> new ProgramException("존재하지 않는 카테고리 입니다", HttpStatus.NOT_FOUND));
 
-    Program program = new Program(findCategory, title, location, quota, detail, status, usageStartDate, usageEndDate, registrationStartDate, registrationEndDate, phone);
+    Program program = new Program(findCategory, title, location, quota, detail, status,  registrationStartDate, registrationEndDate, phone);
 
     programRepository.save(program);
 
@@ -48,7 +50,6 @@ public class ProgramService {
     }
     programDateRepository.saveAll(programDateList);
 
-
     return new ProgramResponseDto(
         program.getId(),
         program.getTitle(),
@@ -57,17 +58,20 @@ public class ProgramService {
         program.getStatus(),
         program.getQuota(),
         program.getDetail(),
-        program.getUsageStartDate(),
-        program.getUsageEndDate(),
         program.getRegistrationStartDate(),
         program.getRegistrationEndDate(),
         program.getPhone(),
         program.getCreatedAt()
     );
   }
+  // 프로그램 목록 조회
+  public Page<ProgramListRequestDto> findProgramList(String title, String location, ProgramStatus status, LocalDateTime dateTime, int page, int size) {
+    Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+    return programRepository.findProgramList(title, location, status, dateTime, pageable);
+   }
 
 
-  // 프로그램 한번에 조회
+  // 프로그램의 일정 조회
   public ProgramDatesResponseDto findAll(Long id) {
     Program findProgram = programRepository.findByIdNotDeleted(id)
         .orElseThrow(() -> new ProgramException("존재하지 않는 프로그램입니다.", HttpStatus.NOT_FOUND));
@@ -96,24 +100,20 @@ public class ProgramService {
         findProgram.getQuota(),
         findProgram.getRegistrationStartDate(),
         findProgram.getRegistrationEndDate(),
-        findProgram.getUsageStartDate(),
-        findProgram.getUsageEndDate(),
         programDateInfoDtos
     );
   }
 
   // 프로그램 수정 (상태값 제외)
   @Transactional
-  public ProgramUpdateResponseDto updateProgram(Long id, String title, String location, Long categoryId,
-                                                Long quota, String detail, LocalDateTime usageStartDate, LocalDateTime usageEndDate,
-                                                LocalDateTime registrationStartDate, LocalDateTime registrationEndDate, String phone) {
+  public ProgramUpdateResponseDto updateProgram(Long id, String title, String location, Long categoryId, Long quota, String detail, LocalDateTime registrationStartDate, LocalDateTime registrationEndDate, String phone) {
     Program findProgram = programRepository.findByIdNotDeleted(id)
         .orElseThrow(() -> new ProgramException("존재하지 않는 프로그램입니다.", HttpStatus.NOT_FOUND));
 
     Category findCategory = categoryRepository.findById(categoryId)
         .orElseThrow(() -> new ProgramException("존재하지 않는 카테고리입니다.", HttpStatus.NOT_FOUND));
 
-    findProgram.update(findCategory, title, location, quota, detail, usageStartDate, usageEndDate, registrationStartDate, registrationEndDate, phone);
+    findProgram.update(findCategory, title, location, quota, detail, registrationStartDate, registrationEndDate, phone);
 
     return new ProgramUpdateResponseDto(
         findProgram.getId(),
@@ -122,8 +122,6 @@ public class ProgramService {
         findProgram.getCategory().getId(),
         findProgram.getQuota(),
         findProgram.getDetail(),
-        findProgram.getUsageStartDate(),
-        findProgram.getUsageEndDate(),
         findProgram.getRegistrationStartDate(),
         findProgram.getRegistrationEndDate(),
         findProgram.getPhone(),
@@ -139,13 +137,11 @@ public class ProgramService {
         .orElseThrow(() -> new ProgramException("존재하지 않는 프로그램입니다.", HttpStatus.NOT_FOUND));
     // 기존에 있던 일정은 모두 삭제
     programDateRepository.deleteAllByProgram(findProgram);
-
+    // 새로 프로그램 일정 추가
     List<ProgramDate> programDateList = new ArrayList<>();
     for (LocalDateTime date : usageDates) {
-      ProgramDate programDate = new ProgramDate(findProgram, date);
-      programDateList.add(programDate);
+      programDateList.add(new ProgramDate(findProgram, date));
     }
-
     programDateRepository.saveAll(programDateList);
 
     List<LocalDateTime> updatedDatelist = new ArrayList<>();
@@ -161,6 +157,9 @@ public class ProgramService {
   public void deleteProgram(Long id) {
     Program findProgram = programRepository.findByIdNotDeleted(id)
         .orElseThrow(() -> new ProgramException("존재하지 않는 프로그램입니다.", HttpStatus.NOT_FOUND));
+    // 프로그램에 포함된 일정 먼저 삭제
+    programDateRepository.deleteAllByProgram(findProgram);
+
     findProgram.delete();
   }
 
@@ -177,7 +176,7 @@ public class ProgramService {
   @Transactional
   public void updateProgramDateStatus() {
     LocalDateTime now = LocalDateTime.now();
-    // 모집중 조회하고 정원이 다 차면 날짜별 일정 CLOESD로 바꾸기
+    // 모집중인 일정 조회하고 정원이 다 차면 일정 마감으로 바꾸기
     List<ProgramDate> programDateList = programDateRepository.findAllByStatus(ProgramDateStatus.RECRUITING);
     for (ProgramDate date : programDateList) {
       if (date.getCount() >= date.getProgram().getQuota()) {
@@ -198,13 +197,11 @@ public class ProgramService {
       }
     }
   }
-  // 모든 일정 closed인지 체크
+
+  // 모든 일정 closed인지 체크 ( 하나라도 모집중 있으면 false)
   private boolean isAllDatesClosed(List<ProgramDate> dateList) {
-    for (ProgramDate date : dateList) {
-      if (date.getStatus() != ProgramDateStatus.CLOSED) {
-        return false;
-      }
-    }
-    return true;
+    return false;
   }
+
+
 }

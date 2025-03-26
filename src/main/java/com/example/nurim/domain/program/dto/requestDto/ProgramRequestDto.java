@@ -8,21 +8,18 @@ import java.util.List;
 
 @Getter
 public class ProgramRequestDto {
-
   private final String title;
   private final String location;
   private final Long categoryId;
   private final ProgramStatus status;
   private final Long quota;
   private final String detail;
-  private final LocalDateTime usageStartDate;
-  private final LocalDateTime usageEndDate;
   private final List<LocalDateTime> usageDates;
   private final LocalDateTime registrationStartDate;
   private final LocalDateTime registrationEndDate;
   private final String phone;
 
-  public ProgramRequestDto(String title, String location, Long categoryId, ProgramStatus status, Long quota, String detail, LocalDateTime usageStartDate, List<LocalDateTime> usageDates,LocalDateTime usageEndDate, LocalDateTime registrationStartDate,LocalDateTime registrationEndDate, String phone){
+  public ProgramRequestDto(String title, String location, Long categoryId, ProgramStatus status, Long quota, String detail,  List<LocalDateTime> usageDates, LocalDateTime registrationStartDate,LocalDateTime registrationEndDate, String phone){
 
     this.title = title;
     this.location = location;
@@ -30,8 +27,6 @@ public class ProgramRequestDto {
     this.status = status;
     this.quota = quota;
     this.detail = detail;
-    this.usageStartDate = usageStartDate;
-    this.usageEndDate =  usageEndDate;
     this.usageDates = usageDates;
     this.registrationStartDate = registrationStartDate;
     this.registrationEndDate = registrationEndDate;

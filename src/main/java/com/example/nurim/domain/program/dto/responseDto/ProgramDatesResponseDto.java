@@ -19,7 +19,5 @@ public class ProgramDatesResponseDto {
   private Long quota;
   private LocalDateTime registrationStartDate;
   private LocalDateTime registrationEndDate;
-  private LocalDateTime usageStartDate;
-  private LocalDateTime usageEndDate;
   private List<ProgramDateInfoDto> dates;
 }

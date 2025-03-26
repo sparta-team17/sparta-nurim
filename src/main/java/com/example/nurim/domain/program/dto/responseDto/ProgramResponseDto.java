@@ -14,14 +14,12 @@ public class ProgramResponseDto {
   private final ProgramStatus status;
   private final Long quota;
   private final String detail;
-  private final LocalDateTime usageStartDate;
-  private final LocalDateTime usageEndDate;
   private final LocalDateTime registrationStartDate;
   private final LocalDateTime registrationEndDate;
   private final String phone;
-  private LocalDateTime createdAt;
+  private final LocalDateTime createdAt;
 
-  public ProgramResponseDto(Long id, String title, String location, Long categoryId, ProgramStatus status, Long quota, String detail, LocalDateTime usageStartDate, LocalDateTime usageEndDate, LocalDateTime registrationStartDate,LocalDateTime registrationEndDate, String phone, LocalDateTime createdAt ){
+  public ProgramResponseDto(Long id, String title, String location, Long categoryId, ProgramStatus status, Long quota, String detail, LocalDateTime registrationStartDate,LocalDateTime registrationEndDate, String phone, LocalDateTime createdAt ){
     this.id = id;
     this.title = title;
     this.location = location;
@@ -29,8 +27,6 @@ public class ProgramResponseDto {
     this.status = status;
     this.quota = quota;
     this.detail = detail;
-    this.usageStartDate = usageStartDate;
-    this.usageEndDate =  usageEndDate;
     this.registrationStartDate = registrationStartDate;
     this.registrationEndDate = registrationEndDate;
     this.phone = phone;

@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @NoArgsConstructor
@@ -39,13 +38,6 @@ public class Program extends Timestamped {
     @Column(nullable = false)
     private ProgramStatus status; // 접수중, 접수종료
 
-    @Column(name = "usage_start_date", nullable = false)
-    private LocalDateTime usageStartDate;
-
-    @Column(name = "usage_end_date", nullable = false)
-    private LocalDateTime usageEndDate;
-
-
     @Column(name = "registration_start_date", nullable = false)
     private LocalDateTime registrationStartDate; // 접수 시작일
 
@@ -59,15 +51,13 @@ public class Program extends Timestamped {
     @Column(length = 50)
     private String phone;
 
-    public Program(Category category, String title, String location, Long quota, String detail, ProgramStatus status, LocalDateTime usageStartDate, LocalDateTime usageEndDate, LocalDateTime registrationStartDate, LocalDateTime registrationEndDate, String phone) {
+    public Program(Category category, String title, String location, Long quota, String detail, ProgramStatus status,  LocalDateTime registrationStartDate, LocalDateTime registrationEndDate, String phone) {
         this.category = category;
         this.title = title;
         this.location = location;
         this.quota = quota;
         this.detail = detail;
         this.status = status;
-        this.usageStartDate = usageStartDate;
-        this.usageEndDate = usageEndDate;
         this.registrationStartDate = registrationStartDate;
         this.registrationEndDate = registrationEndDate;
         this.phone = phone;
@@ -75,18 +65,17 @@ public class Program extends Timestamped {
     }
 
     // 프로그램 수정(상태값 제외)
-    public void update(Category category, String title, String location, Long quota, String detail, LocalDateTime usageStartDate, LocalDateTime usageEndDate, LocalDateTime registrationStartDate, LocalDateTime registrationEndDate, String phone) {
+    public void update(Category category, String title, String location, Long quota, String detail,  LocalDateTime registrationStartDate, LocalDateTime registrationEndDate, String phone) {
         this.category = category;
         this.title = title;
         this.location = location;
         this.quota = quota;
         this.detail = detail;
-        this.usageStartDate = usageStartDate;
-        this.usageEndDate = usageEndDate;
         this.registrationStartDate = registrationStartDate;
         this.registrationEndDate = registrationEndDate;
         this.phone = phone;
     }
+
     public void updateStatus(ProgramStatus status) {
         this.status = status;
     }
