@@ -1,18 +1,14 @@
 package com.example.nurim.domain.program.controller;
 
+import com.example.nurim.domain.program.dto.requestDto.ProgramDateUpdateRequestDto;
 import com.example.nurim.domain.program.dto.requestDto.ProgramRequestDto;
 import com.example.nurim.domain.program.dto.requestDto.ProgramUpdateRequestDto;
-import com.example.nurim.domain.program.dto.requestDto.ProgramUpdateStatusRequestDto;
 import com.example.nurim.domain.program.dto.responseDto.*;
 import com.example.nurim.domain.program.service.ProgramService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -31,6 +27,7 @@ public class ProgramController {
         requestDto.getDetail(),
         requestDto.getUsageStartDate(),
         requestDto.getUsageEndDate(),
+        requestDto.getUsageDates(),
         requestDto.getRegistrationStartDate(),
         requestDto.getRegistrationEndDate(),
         requestDto.getPhone()
@@ -38,21 +35,11 @@ public class ProgramController {
     return new ResponseEntity<>(programResponseDto, HttpStatus.CREATED);
   }
 
-  // 프로그램 목록 조회
-  @GetMapping("/programs")
-  public ResponseEntity<List<ProgramListResponseDto>> findAll() {
-    List<ProgramListResponseDto> programList = programService.findAll();
-    return new ResponseEntity<>(programList, HttpStatus.OK);
-  }
-
-  // 프로그램 상세 조회
+  // 프로그램 모든 데이터 조회
   @GetMapping("/programs/{id}")
-  public ResponseEntity<ProgramDetailResponseDto> findByID(
-      @PathVariable Long id, @RequestParam(name = "date") String date) {
-    LocalDateTime dateTime = LocalDate.parse(date).atStartOfDay();
-
-    ProgramDetailResponseDto programDetailResponseDto = programService.findById(id, dateTime);
-    return new ResponseEntity<>(programDetailResponseDto, HttpStatus.OK);
+  public ResponseEntity<ProgramDatesResponseDto> findAll(@PathVariable Long id) {
+    ProgramDatesResponseDto programDatesResponseDto  = programService.findAll(id);
+    return new ResponseEntity<>(programDatesResponseDto,HttpStatus.OK);
   }
 
   // 프로그램 수정
@@ -74,13 +61,17 @@ public class ProgramController {
     return new ResponseEntity<>(programUpdateResponseDto, HttpStatus.OK);
   }
 
-  // 프로그램 상태 변경
-  @PatchMapping("/admin/programs/{id}/status")
-  public ResponseEntity<ProgramStatusUpdateResponseDto> updateStatus(@PathVariable Long id, @RequestBody ProgramUpdateStatusRequestDto requestDto) {
+  //프로그램 일정 수정
+  @PutMapping("/admin/programs/{id}/dates")
+  public ResponseEntity<ProgramDateUpdateResponseDto> updateProgramDates(
+      @PathVariable Long id,
+      @RequestBody ProgramDateUpdateRequestDto request) {
 
-    ProgramStatusUpdateResponseDto responseDto = programService.updateStatus(id, requestDto.getStatus());
-    return ResponseEntity.ok(responseDto);
+    ProgramDateUpdateResponseDto programDateUpdateResponseDto = programService.updateProgramDates(id, request.getUsageDates());
+    return new ResponseEntity<>(programDateUpdateResponseDto, HttpStatus.OK);
   }
+
+
 
   // 프로그램 삭제
   @DeleteMapping("/admin/programs/{id}")
@@ -88,6 +79,14 @@ public class ProgramController {
     programService.deleteProgram(id);
     return new ResponseEntity<>(HttpStatus.OK);
   }
+
+  // 프로그램 일정 삭제
+  @DeleteMapping("/admin/programs/dates/{id}")
+  public ResponseEntity<Void> deleteProgramDate(@PathVariable Long id){
+    programService.deleteProgramDate(id);
+    return new ResponseEntity<>(HttpStatus.OK);
+  }
+
 }
 
 

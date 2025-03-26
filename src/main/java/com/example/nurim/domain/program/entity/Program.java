@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @NoArgsConstructor
 @Entity
@@ -45,10 +47,10 @@ public class Program extends Timestamped {
 
 
     @Column(name = "registration_start_date", nullable = false)
-    private LocalDateTime registrationStartDate;
+    private LocalDateTime registrationStartDate; // 접수 시작일
 
     @Column(name = "registration_end_date", nullable = false)
-    private LocalDateTime registrationEndDate;
+    private LocalDateTime registrationEndDate; // 접수 마감일
 
 
     @Column(name = "deleted_at")
@@ -85,9 +87,7 @@ public class Program extends Timestamped {
         this.registrationEndDate = registrationEndDate;
         this.phone = phone;
     }
-
-    // 프로그램 상태값만 수정
-    public void updateStatus(ProgramStatus status){
+    public void updateStatus(ProgramStatus status) {
         this.status = status;
     }
 

@@ -4,6 +4,7 @@ import com.example.nurim.domain.program.enums.ProgramStatus;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 public class ProgramRequestDto {
@@ -16,11 +17,12 @@ public class ProgramRequestDto {
   private final String detail;
   private final LocalDateTime usageStartDate;
   private final LocalDateTime usageEndDate;
+  private final List<LocalDateTime> usageDates;
   private final LocalDateTime registrationStartDate;
   private final LocalDateTime registrationEndDate;
   private final String phone;
 
-  public ProgramRequestDto(String title, String location, Long categoryId, ProgramStatus status, Long quota, String detail, LocalDateTime usageStartDate, LocalDateTime usageEndDate, LocalDateTime registrationStartDate,LocalDateTime registrationEndDate, String phone){
+  public ProgramRequestDto(String title, String location, Long categoryId, ProgramStatus status, Long quota, String detail, LocalDateTime usageStartDate, List<LocalDateTime> usageDates,LocalDateTime usageEndDate, LocalDateTime registrationStartDate,LocalDateTime registrationEndDate, String phone){
 
     this.title = title;
     this.location = location;
@@ -30,6 +32,7 @@ public class ProgramRequestDto {
     this.detail = detail;
     this.usageStartDate = usageStartDate;
     this.usageEndDate =  usageEndDate;
+    this.usageDates = usageDates;
     this.registrationStartDate = registrationStartDate;
     this.registrationEndDate = registrationEndDate;
     this.phone = phone;

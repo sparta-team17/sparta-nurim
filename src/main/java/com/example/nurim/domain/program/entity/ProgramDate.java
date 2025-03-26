@@ -1,6 +1,7 @@
 package com.example.nurim.domain.program.entity;
 
 import com.example.nurim.domain.common.entity.Timestamped;
+import com.example.nurim.domain.program.enums.ProgramDateStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,9 +26,18 @@ public class ProgramDate extends Timestamped {
 
     private LocalDateTime date;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ProgramDateStatus status;
+
     public ProgramDate(Program program, LocalDateTime date) {
         this.program = program;
         this.date = date;
         this.count = 0; // 초기 신청자 수를 0으로 설정
+        this.status = ProgramDateStatus.RECRUITING; // 초기값을 모집중으로 설정
+    }
+
+    public void updateClose(){
+        this.status = ProgramDateStatus.CLOSED;
     }
 }
