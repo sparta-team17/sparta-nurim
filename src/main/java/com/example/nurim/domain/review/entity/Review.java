@@ -4,8 +4,6 @@ import com.example.nurim.domain.common.entity.Timestamped;
 import com.example.nurim.domain.program.entity.ProgramDate;
 import com.example.nurim.domain.user.entity.User;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,8 +21,6 @@ public class Review extends Timestamped {
     private Long id;
 
     @Column(nullable = false)
-    @Min(0)
-    @Max(5)
     private double rating;
 
     @Column(nullable = false)
