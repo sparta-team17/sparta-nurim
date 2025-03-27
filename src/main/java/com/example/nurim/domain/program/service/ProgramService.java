@@ -1,5 +1,7 @@
 package com.example.nurim.domain.program.service;
 
+import com.example.nurim.domain.common.exception.CustomException;
+import com.example.nurim.domain.common.exception.ErrorCode;
 import com.example.nurim.domain.program.dto.requestDto.ProgramRequestDto;
 import com.example.nurim.domain.program.dto.requestDto.ProgramSearchRequestDto;
 import com.example.nurim.domain.program.dto.requestDto.ProgramUpdateRequestDto;
@@ -38,7 +40,7 @@ public class ProgramService {
   public ProgramResponseDto createProgram(ProgramRequestDto requestDto) {
 
     Category findCategory = categoryRepository.findById(requestDto.getCategoryId())
-        .orElseThrow(() -> new ProgramException("존재하지 않는 카테고리 입니다", HttpStatus.NOT_FOUND));
+        .orElseThrow(() -> new CustomException(ErrorCode.CATEGORY_NOT_FOUND));
 
     Program program = new Program(
         findCategory,
@@ -90,7 +92,7 @@ public class ProgramService {
   // 프로그램의 일정 조회
   public ProgramDatesResponseDto findAll(Long programId) {
     Program findProgram = programRepository.findByIdAndDeletedAtIsNull(programId)
-        .orElseThrow(() -> new ProgramException("존재하지 않는 프로그램입니다.", HttpStatus.NOT_FOUND));
+        .orElseThrow(() -> new CustomException(ErrorCode.PROGRAM_NOT_FOUND));
 
     List<ProgramDate> programDates = programDateRepository.findAllByProgram(findProgram);
 
@@ -124,10 +126,10 @@ public class ProgramService {
   @Transactional
   public ProgramUpdateResponseDto updateProgram(Long programId, ProgramUpdateRequestDto requestDto) {
     Program findProgram = programRepository.findByIdAndDeletedAtIsNull(programId)
-        .orElseThrow(() -> new ProgramException("존재하지 않는 프로그램입니다.", HttpStatus.NOT_FOUND));
+        .orElseThrow(() -> new CustomException(ErrorCode.PROGRAM_NOT_FOUND));
 
     Category findCategory = categoryRepository.findById(requestDto.getCategoryId())
-        .orElseThrow(() -> new ProgramException("존재하지 않는 카테고리입니다.", HttpStatus.NOT_FOUND));
+        .orElseThrow(() -> new CustomException(ErrorCode.CATEGORY_NOT_FOUND));
 
     findProgram.update(
         findCategory,
@@ -159,7 +161,7 @@ public class ProgramService {
   public ProgramDateUpdateResponseDto updateProgramDates(Long programId, List<LocalDateTime> usageDates) {
 
     Program findProgram = programRepository.findByIdAndDeletedAtIsNull(programId)
-        .orElseThrow(() -> new ProgramException("존재하지 않는 프로그램입니다.", HttpStatus.NOT_FOUND));
+        .orElseThrow(() -> new CustomException(ErrorCode.PROGRAM_NOT_FOUND));
     // 기존에 있던 일정은 모두 삭제
     programDateRepository.deleteAllByProgram(findProgram);
     // 새로 프로그램 일정 추가
@@ -181,7 +183,7 @@ public class ProgramService {
   @Transactional
   public void deleteProgram(Long programId) {
     Program findProgram = programRepository.findByIdAndDeletedAtIsNull(programId)
-        .orElseThrow(() -> new ProgramException("존재하지 않는 프로그램입니다.", HttpStatus.NOT_FOUND));
+        .orElseThrow(() -> new CustomException(ErrorCode.PROGRAM_NOT_FOUND));
     // 프로그램에 포함된 일정 먼저 삭제
     programDateRepository.deleteAllByProgram(findProgram);
 
@@ -192,7 +194,7 @@ public class ProgramService {
   @Transactional
   public void deleteProgramDate(Long programDateId) {
     ProgramDate findProgramDate = programDateRepository.findById(programDateId)
-        .orElseThrow(() -> new ProgramException("존재하지 않는 일정입니다.", HttpStatus.NOT_FOUND));
+        .orElseThrow(() -> new CustomException(ErrorCode.PROGRAMDATE_NOT_FOUND));
     programDateRepository.delete(findProgramDate);
   }
 
