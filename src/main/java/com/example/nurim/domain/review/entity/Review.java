@@ -1,7 +1,7 @@
 package com.example.nurim.domain.review.entity;
 
 import com.example.nurim.domain.common.entity.Timestamped;
-import com.example.nurim.domain.program.entity.Program;
+import com.example.nurim.domain.program.entity.ProgramDate;
 import com.example.nurim.domain.user.entity.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
@@ -35,18 +35,17 @@ public class Review extends Timestamped {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "program_id", nullable = false)
-    private Program program;
+    @JoinColumn(name = "program_date_id", nullable = false)
+    private ProgramDate programDate;
 
     private LocalDateTime deletedAt;
 
     @Builder
-    public Review(double rating, String contents, User user, Program program, LocalDateTime deletedAt) {
+    public Review(double rating, String contents, User user, ProgramDate programDate) {
         this.rating = rating;
         this.contents = contents;
         this.user = user;
-        this.program = program;
-        this.deletedAt = deletedAt;
+        this.programDate = programDate;
     }
 
     public void updateReview(double rating, String contents) {
@@ -54,7 +53,7 @@ public class Review extends Timestamped {
         this.contents = contents;
     }
 
-    public void deleteReview() {
-        this.deletedAt = LocalDateTime.now();
+    public void deleteReview(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
     }
 }

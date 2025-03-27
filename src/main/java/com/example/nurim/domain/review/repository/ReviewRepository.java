@@ -8,17 +8,23 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query("""
-            SELECT r.id AS reviewId, r.contents AS contents, r.rating AS rating, r.createdAt AS createdAt, 
+            SELECT r.id AS reviewId, r.contents AS contents, r.rating AS rating, r.createdAt AS createdAt,
                    p.id AS programId, p.title AS programTitle, p.deletedAt AS programDeletedAt
-            FROM Review r 
-            JOIN r.program p 
+            FROM Review r
+            JOIN r.programDate.program p
             WHERE r.user.id = :userId AND r.deletedAt IS NULL
     """)
     Page<UserReviewResponse> findActiveByUserId(@Param("userId") Long userId, Pageable pageable);
 
-    @Query("SELECT r FROM Review r JOIN FETCH r.user WHERE r.program.id = :programId AND r.deletedAt IS NULL")
-    Page<Review> findReviewsByProgramId(Long programId, Pageable pageable);
+    @Query("SELECT r FROM Review r JOIN FETCH r.user WHERE r.programDate.program.id = :programId AND r.deletedAt IS NULL")
+    Page<Review> findReviewsByProgramId(@Param("programId") Long programId, Pageable pageable);
+
+    Optional<Review> findReviewByIdAndDeletedAtIsNull(@Param("reviewId") Long reviewId);
+
+    boolean existsReviewByUser_IdAndProgramDate_Id(@Param("userId") Long userId, @Param("programDateId") Long programDateId);
 }

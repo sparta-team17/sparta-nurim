@@ -6,10 +6,9 @@ import org.springframework.http.HttpStatus;
 @Getter
 public class ForbiddenException extends RuntimeException {
 
-  private final HttpStatus status;
+  private final HttpStatus status = HttpStatus.FORBIDDEN;
 
-  public ForbiddenException(HttpStatus status, String message) {
+  public ForbiddenException(String message) {
     super(message);
-    this.status = status;
   }
 }
