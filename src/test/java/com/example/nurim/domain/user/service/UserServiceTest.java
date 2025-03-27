@@ -1,6 +1,7 @@
 package com.example.nurim.domain.user.service;
 
 import com.example.nurim.domain.application.dto.response.UserApplicationResponse;
+import com.example.nurim.domain.application.enums.ApplicationStatus;
 import com.example.nurim.domain.application.repository.ApplicationRepository;
 import com.example.nurim.domain.review.dto.response.UserReviewResponse;
 import com.example.nurim.domain.review.repository.ReviewRepository;
@@ -21,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -145,11 +147,9 @@ class UserServiceTest {
         @Test
         @Order(1)
         void 사용자_리뷰_조회_성공() {
-            LocalDateTime now = LocalDateTime.now();
-            List<UserReviewResponse> userReviewResponseList = List.of(
-                    new UserReviewResponse(1L, "review1", 5.0, now, 1L, "program1", null),
-                    new UserReviewResponse(2L, "review2", 4.5, now, 2L, "program2", null)
-            );
+            List<UserReviewResponse> userReviewResponseList = IntStream.rangeClosed(0, 2)
+                    .mapToObj(i -> mock(UserReviewResponse.class))
+                    .toList();
             Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
             PageImpl<UserReviewResponse> userReviewResponsePage = new PageImpl<>(userReviewResponseList, pageable, userReviewResponseList.size());
 
@@ -177,8 +177,8 @@ class UserServiceTest {
             LocalDateTime createdAt = LocalDateTime.now();
             LocalDateTime usageDateTime = createdAt.plusDays(10);
             List<UserApplicationResponse> userApplicationResponseList = List.of(
-                    new UserApplicationResponse(1L, createdAt, usageDateTime, 1L, "program1", null),
-                    new UserApplicationResponse(2L, createdAt, usageDateTime,2L, "program2", null)
+                    new UserApplicationResponse(1L, createdAt, ApplicationStatus.COMPLETE, usageDateTime, 1L, "program1", null),
+                    new UserApplicationResponse(2L, createdAt, ApplicationStatus.COMPLETE, usageDateTime,2L, "program2", null)
             );
             Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
             Page<UserApplicationResponse> userReviewResponsePage = new PageImpl<>(userApplicationResponseList, pageable, userApplicationResponseList.size());
