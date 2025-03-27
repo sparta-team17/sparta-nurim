@@ -22,7 +22,7 @@ public class ApplicationResponseDto {
         this.programDateId = application.getProgramDate().getId();
         this.programTitle = application.getProgramDate().getProgram().getTitle();
         this.applicationDate = application.getCreatedAt();
-        this.useDate = application.getProgram().getUsageStartDate();
+        this.useDate = application.getProgramDate().getDate();
         this.status = application.getStatus();
     }
 }

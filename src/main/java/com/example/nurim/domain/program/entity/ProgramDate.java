@@ -26,18 +26,6 @@ public class ProgramDate extends Timestamped {
 
     private LocalDateTime date;
 
-
-    // 신청자 수 증가 메서드 추가
-    public void incrementCount() {
-        this.count++;
-    }
-
-    // 신청 취소 시 count 감소
-    public void decrementCount() {
-        if (this.count > 0) {
-            this.count--;
-        }
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ProgramDateStatus status;
@@ -49,8 +37,20 @@ public class ProgramDate extends Timestamped {
         this.status = ProgramDateStatus.RECRUITING; // 초기값을 모집중으로 설정
     }
 
-    public void updateClose(ProgramDateStatus status){
+    public void updateClose(ProgramDateStatus status) {
         this.status = status;
 
+    }
+
+    // 신청자 수 증가 메서드 추가
+    public void incrementCount() {
+        this.count++;
+    }
+
+    // 신청 취소 시 count 감소
+    public void decrementCount() {
+        if (this.count > 0) {
+            this.count--;
+        }
     }
 }
