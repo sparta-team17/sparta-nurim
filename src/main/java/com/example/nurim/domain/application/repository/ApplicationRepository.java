@@ -15,9 +15,9 @@ public interface ApplicationRepository extends JpaRepository<Application, Long>,
     boolean existsByProgramDateIdAndUserId(Long programDateId, Long userId);
 
     @Query("""
-            SELECT CASE WHEN COUNT(a) > 0 THEN TRUE ELSE FALSE END 
-            FROM Application a 
-            JOIN a.programDate d 
+            SELECT CASE WHEN COUNT(a) > 0 THEN TRUE ELSE FALSE END
+            FROM Application a
+            JOIN a.programDate d
             WHERE a.user.id = :userId AND a.status = 'COMPLETE' AND d.date > CURRENT_TIMESTAMP
     """)
     Boolean existsUnusedApplicationByUserId(@Param("userId") Long userId);
