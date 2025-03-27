@@ -22,7 +22,7 @@ public class AuthService {
     private final JwtUtil jwtUtil;
 
     @Transactional
-    public AuthResponse signup(SignupRequest request) {
+    public void signup(SignupRequest request) {
         validateEmailInUse(request.getEmail());
         validateDeletedAccount(request.getEmail());
 
@@ -30,9 +30,6 @@ public class AuthService {
         User user = new User(request.getEmail(), encodedPassword, request.getName());
 
         userRepository.save(user);
-
-        String token = jwtUtil.createToken(user.getId(), user.getEmail(), user.getName(), user.getRole());
-        return new AuthResponse(token);
     }
 
     @Transactional(readOnly = true)

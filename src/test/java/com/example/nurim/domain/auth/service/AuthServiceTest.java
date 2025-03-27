@@ -67,18 +67,14 @@ class AuthServiceTest {
         @Order(3)
         void 회원가입_성공() {
             String encodedPassword = "encodedPassword";
-            String token = "testToken";
 
             given(userRepository.existsByEmailAndDeletedAtIsNull(anyString())).willReturn(false);
             given(userRepository.existsByEmailAndDeletedAtIsNotNull(anyString())).willReturn(false);
             given(passwordEncoder.encode(anyString())).willReturn(encodedPassword);
-            given(jwtUtil.createToken(any(), anyString(), anyString(), any(UserRole.class))).willReturn(token);
 
-            AuthResponse response = authService.signup(request);
+            authService.signup(request);
 
             verify(userRepository, times(1)).save(any(User.class));
-            assertNotNull(response);
-            assertEquals(token, response.getBearerToken());
         }
     }
 
