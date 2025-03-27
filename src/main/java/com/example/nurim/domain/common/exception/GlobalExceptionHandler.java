@@ -21,18 +21,6 @@ public class GlobalExceptionHandler {
         return getErrorResponse(e.getStatus(), e.getMessage());
     }
 
-    @ExceptionHandler(InvalidRequestException.class)
-    public ResponseEntity<Map<String, Object>> invalidRequestException(InvalidRequestException ex) {
-        HttpStatus status = HttpStatus.BAD_REQUEST;
-        return getErrorResponse(status, ex.getMessage());
-    }
-
-    @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<Map<String, Object>> unauthorizedException(UnauthorizedException ex) {
-        HttpStatus status = HttpStatus.UNAUTHORIZED;
-        return getErrorResponse(status, ex.getMessage());
-    }
-
     public ResponseEntity<Map<String, Object>> getErrorResponse(HttpStatus status, String message) {
         Map<String, Object> errorResponse = ErrorResponseUtil.getErrorResponse(status, message);
         return new ResponseEntity<>(errorResponse, status);

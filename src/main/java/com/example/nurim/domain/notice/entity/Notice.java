@@ -6,7 +6,7 @@ import com.example.nurim.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.redis.core.RedisHash;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -27,6 +27,7 @@ public class Notice extends Timestamped {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Setter
     private LocalDateTime deletedAt;
 
     private Integer count;
@@ -47,7 +48,4 @@ public class Notice extends Timestamped {
         }
     }
 
-    public void setDeletedAt(){
-        this.deletedAt = LocalDateTime.now();
-    }
 }
