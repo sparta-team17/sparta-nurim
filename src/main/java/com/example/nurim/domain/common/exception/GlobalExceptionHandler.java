@@ -1,4 +1,4 @@
-package com.example.nurim.config;
+package com.example.nurim.domain.common.exception;
 
 import com.example.nurim.domain.auth.exception.AuthException;
 import com.example.nurim.domain.user.exception.UserException;
@@ -19,6 +19,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler
     public ResponseEntity<Map<String, Object>> handleAuthException(AuthException e) {
         return getErrorResponse(e.getStatus(), e.getMessage());
+    }
+
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<Map<String, Object>> invalidRequestException(InvalidRequestException ex) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        return getErrorResponse(status, ex.getMessage());
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<Map<String, Object>> unauthorizedException(UnauthorizedException ex) {
+        HttpStatus status = HttpStatus.UNAUTHORIZED;
+        return getErrorResponse(status, ex.getMessage());
     }
 
     public ResponseEntity<Map<String, Object>> getErrorResponse(HttpStatus status, String message) {
