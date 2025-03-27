@@ -20,9 +20,9 @@ public class ApplicationResponseDto {
     public ApplicationResponseDto(Application application) {
         this.id = application.getId();
         this.programDateId = application.getProgramDate().getId();
-        this.programTitle = application.getProgramDate().getProgram().getTitle(); //
+        this.programTitle = application.getProgramDate().getProgram().getTitle();
         this.applicationDate = application.getCreatedAt();
-        this.useDate = application.getUpdatedAt();
+        this.useDate = application.getProgram().getUsageStartDate();
         this.status = application.getStatus();
     }
 }

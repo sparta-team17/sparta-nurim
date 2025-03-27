@@ -1,6 +1,5 @@
 package com.example.nurim.domain.application.service;
 
-import com.example.nurim.domain.application.dto.request.ApplicationRequestDto;
 import com.example.nurim.domain.application.dto.response.ApplicationResponseDto;
 import com.example.nurim.domain.application.entity.Application;
 import com.example.nurim.domain.application.repository.ApplicationRepository;
@@ -26,7 +25,7 @@ public class ApplicationService {
     private final ProgramDateRepository programDateRepository;
 
     @Transactional
-    public ApplicationResponseDto createApplication(AuthUser authUser, Long programDateId, ApplicationRequestDto requestDto) {
+    public ApplicationResponseDto createApplication(AuthUser authUser, Long programDateId) {
         // 사용자 조회
         User user = userRepository.findById(authUser.getId())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
@@ -46,7 +45,7 @@ public class ApplicationService {
 
         // 선착순 신청 확인 (최대 인원 인원 수)
         long currentApplicationsCount = applicationRepository.countByProgramDateId(programDateId);
-        if (currentApplicationsCount >= programDate.getCount()) {
+        if (currentApplicationsCount >= programDate.getProgram().getQuota()) {
             throw new CustomException(ErrorCode.APPLICATION_FULL);
         }
 
@@ -56,7 +55,11 @@ public class ApplicationService {
                         .programDate(programDate)
                         .build();
 
-        application = applicationRepository.save(application);
+        applicationRepository.save(application);
+
+        // 신청 완료 후 ProgramDate.count 증가
+        programDate.incrementCount();
+        programDateRepository.save(programDate);
 
         return new ApplicationResponseDto(application);
     }
@@ -76,11 +79,18 @@ public class ApplicationService {
         }
 
         // 신청 취소 가능 여부 확인 (접수 종료일 기준 1일 전까지 취소 가능)
-        if (application.getProgramDate().getDate().minusDays(1).isBefore(LocalDateTime.now())) {
+        if (application.getProgramDate().getProgram().getRegistrationEndDate().minusDays(1).isBefore(LocalDateTime.now())) {
             throw new CustomException(ErrorCode.CANCELLATION_PERIOD_EXPIRED);
         }
 
-        // 신청 취소
-        applicationRepository.delete(application);
+        // 신청 상태 변경
+        application.cancelApplication();
+
+        // 신청 취소 시 ProgramDate.count 감소
+        application.getProgramDate().decrementCount();
+
+        // 변경 사항 저장
+        applicationRepository.save(application);
+        programDateRepository.save(application.getProgramDate());
     }
 }

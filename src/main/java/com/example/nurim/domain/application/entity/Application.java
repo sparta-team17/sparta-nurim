@@ -26,32 +26,35 @@ public class Application extends Timestamped {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "program_id", nullable = false)
-    private Program program;
-
-    @Column(name = "appication_date", nullable = false)
-    private LocalDateTime applicationDate; // 신청일
-
-    @Column(name = "user_date", nullable = false)
-    private LocalDateTime userDate; // 이용일
-
-    @Enumerated(EnumType.STRING)
-    private ApplicationStatus status;
+    @JoinColumn(name = "program_date_id", nullable = false)
+    private ProgramDate programDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "program_date_id", nullable = false)
-    private ProgramDate programDate;
+    @Enumerated(EnumType.STRING)
+    private ApplicationStatus status;
 
-    public Application(Program program, LocalDateTime applicationDate, LocalDateTime userDate, ApplicationStatus status, User user, ProgramDate programDate) {
-        this.program = program;
-        this.applicationDate = applicationDate;
-        this.userDate = userDate;
-        this.status = status;
-        this.user = user;
+    @Column(name = "use_date", nullable = false)
+    private LocalDateTime useDate; // 이용일
+
+    @Column(name = "is_reviewd", nullable = false)
+    private boolean isReviewd; // 리뷰 작성 여부
+
+    public Application(ProgramDate programDate, User user, ApplicationStatus status, LocalDateTime userDate) {
         this.programDate = programDate;
+        this.user = user;
+        this.status = status;
+        this.useDate = userDate;
+        this.isReviewd = false; // 기본값 : 리뷰 미작성
+    }
+
+    public void markAsReviewed() {
+        this.isReviewd = true; // 리뷰 작성 완료 처리 메서드 추가
+    }
+
+    public void cancelApplication() {
+        this.status = ApplicationStatus.CANCEL;
     }
 }

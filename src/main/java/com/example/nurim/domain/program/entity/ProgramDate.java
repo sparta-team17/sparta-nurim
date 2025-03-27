@@ -24,4 +24,16 @@ public class ProgramDate extends Timestamped {
     private Integer count;
 
     private LocalDateTime date;
+
+    // 신청자 수 증가 메서드 추가
+    public void incrementCount() {
+        this.count++;
+    }
+
+    // 신청 취소 시 count 감소
+    public void decrementCount() {
+        if (this.count > 0) {
+            this.count--;
+        }
+    }
 }
