@@ -5,10 +5,13 @@ import com.example.nurim.domain.common.exception.ErrorCode;
 import com.example.nurim.domain.notice.dto.response.NoticeResponseDto;
 import com.example.nurim.domain.notice.dto.response.NoticeSearchResponseDto;
 import com.example.nurim.domain.notice.entity.Notice;
+import com.example.nurim.domain.notice.entity.NoticeView;
 import com.example.nurim.domain.notice.repository.NoticeRepository;
+import com.example.nurim.domain.notice.repository.NoticeViewRepository;
 import com.example.nurim.domain.user.entity.User;
 import com.example.nurim.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,11 +21,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NoticeService {
 
     private final NoticeRepository noticeRepository;
+    private final NoticeViewRepository noticeViewRepository;
     private final UserRepository userRepository;
 
     private RedisTemplate<String, Integer> redisTemplate;
@@ -62,7 +67,21 @@ public class NoticeService {
         return NoticeResponseDto.fromEntity(notice);
     }
 
-    public NoticeResponseDto findNotice(Long noticeId) {
+    @Transactional
+    public NoticeResponseDto findNoticeWithDb(Long noticeId, Long userId) {
+        Notice notice = noticeRepository.findByIdAndDeletedAtIsNull(noticeId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
+
+        if(!noticeViewRepository.existsByUserIdAndNoticeId(userId, noticeId)){
+            noticeViewRepository.save(new NoticeView(notice.getId(), userId));
+            notice.addCount();
+        }
+
+        return NoticeResponseDto.fromEntity(notice);
+    }
+
+    @Transactional
+    public NoticeResponseDto findNoticeWithCache(Long noticeId) {
         Notice notice = noticeRepository.findByIdAndDeletedAtIsNull(noticeId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
         return NoticeResponseDto.fromEntity(notice);

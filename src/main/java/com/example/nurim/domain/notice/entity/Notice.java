@@ -47,5 +47,7 @@ public class Notice extends Timestamped {
             this.contents = contents;
         }
     }
-
+    public void addCount(){
+        this.count++;
+    }
 }

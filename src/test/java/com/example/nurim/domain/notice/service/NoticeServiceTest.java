@@ -1,11 +1,14 @@
 package com.example.nurim.domain.notice.service;
 
+import com.example.nurim.config.SchedulerConfig;
 import com.example.nurim.domain.common.exception.CustomException;
 import com.example.nurim.domain.common.exception.ErrorCode;
 import com.example.nurim.domain.notice.dto.response.NoticeResponseDto;
 import com.example.nurim.domain.notice.dto.response.NoticeSearchResponseDto;
 import com.example.nurim.domain.notice.entity.Notice;
+import com.example.nurim.domain.notice.entity.NoticeView;
 import com.example.nurim.domain.notice.repository.NoticeRepository;
+import com.example.nurim.domain.notice.repository.NoticeViewRepository;
 import com.example.nurim.domain.user.entity.User;
 import com.example.nurim.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.Nested;
@@ -20,6 +23,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.sql.Ref;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -35,7 +39,11 @@ class NoticeServiceTest {
     @Mock
     private NoticeRepository noticeRepository;
     @Mock
+    private NoticeViewRepository noticeViewRepository;
+    @Mock
     private UserRepository userRepository;
+    @Mock
+    private SchedulerConfig schedulerConfig;
     @InjectMocks
     private NoticeService noticeService;
 
@@ -244,7 +252,7 @@ class NoticeServiceTest {
 
             given(noticeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(notice));
 
-            NoticeResponseDto responseDto = noticeService.findNotice(noticeId);
+            NoticeResponseDto responseDto = noticeService.findNoticeWithDb(noticeId, userId);
 
             assertThat(responseDto).isNotNull();
             assertThat(responseDto.getNoticeId()).isEqualTo(noticeId);
@@ -253,14 +261,47 @@ class NoticeServiceTest {
         @Test
         void 공지사항_상세조회_실패(){
             Long noticeId = 1L;
+            Long userId = 1L;
 
             given(noticeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.empty());
 
             CustomException exception = assertThrows(CustomException.class, () -> {
-                noticeService.findNotice(noticeId);
+                noticeService.findNoticeWithDb(noticeId, userId);
             });
 
             assertEquals(ErrorCode.NOTICE_NOT_FOUND, exception.getErrorCode());
+        }
+        @Test
+        void 공지사항_스케줄러_실행후_조회수_초기화_검증() {
+            // given
+            Long userId = 1L;
+            String email = "a@test.com";
+            String password = "1234";
+            String name = "이름";
+            User user = new User(email,password,name);
+
+            Long noticeId = 1L;
+            Integer count = 0;
+            Notice notice = new Notice();
+            ReflectionTestUtils.setField(notice,"id", noticeId);
+            ReflectionTestUtils.setField(notice, "count", count);
+            ReflectionTestUtils.setField(notice,"user",user);
+
+            given(noticeRepository.findByIdAndDeletedAtIsNull(noticeId)).willReturn(Optional.of(notice));
+            given(noticeViewRepository.existsByUserIdAndNoticeId(userId, noticeId)).willReturn(false);
+
+            // 첫 조회
+            // 조회수 초기화
+            NoticeResponseDto firstResponse = noticeService.findNoticeWithDb(noticeId, userId);
+            assertEquals(1, firstResponse.getCount()); // 조회수 1 확인
+
+            // 스케줄러 실행 (조회 기록 초기화)
+            schedulerConfig.clearNoticeViews();
+            // 초기화 후 두번째 조회
+            NoticeResponseDto secondResponse = noticeService.findNoticeWithDb(noticeId, userId);
+
+            // then
+            assertEquals(2, secondResponse.getCount()); // 조회수 2 확인
         }
     }
 
@@ -273,12 +314,13 @@ class NoticeServiceTest {
             int size = 5;
             String keyword = "공지";
             String userName = "관리자";
+            Integer count = 123;
             LocalDateTime createdAt = LocalDateTime.now();
             Pageable pageable = PageRequest.of(page - 1, size);
 
             List<NoticeSearchResponseDto> noticeList = List.of(
-                    new NoticeSearchResponseDto(1L, "공지사항1", createdAt,userName),
-                    new NoticeSearchResponseDto(2L, "공지사항2", createdAt,userName)
+                    new NoticeSearchResponseDto(1L, "공지사항1",count, createdAt,userName),
+                    new NoticeSearchResponseDto(2L, "공지사항2",count, createdAt,userName)
             );
             Page<NoticeSearchResponseDto> mockPage = new PageImpl<>(noticeList, pageable, noticeList.size());
 
