@@ -1,6 +1,7 @@
 package com.example.nurim.domain.auth.service;
 
 import com.example.nurim.config.JwtUtil;
+import com.example.nurim.domain.auth.dto.request.RefreshRequest;
 import com.example.nurim.domain.auth.dto.request.SigninRequest;
 import com.example.nurim.domain.auth.dto.request.SignupRequest;
 import com.example.nurim.domain.auth.dto.response.AuthResponse;
@@ -20,6 +21,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final RefreshTokenService refreshTokenService;
 
     @Transactional
     public void signup(SignupRequest request) {
@@ -32,15 +34,24 @@ public class AuthService {
         userRepository.save(user);
     }
 
-    @Transactional(readOnly = true)
-    public AuthResponse signin( SigninRequest request) {
+    @Transactional
+    public AuthResponse signin(SigninRequest request) {
         User user = userRepository.findByEmailAndDeletedAtIsNull(request.getEmail())
                 .orElseThrow(() -> new AuthException(HttpStatus.BAD_REQUEST, "No account found with this email"));
 
         validatePassword(request.getPassword(), user.getPassword());
 
-        String token = jwtUtil.createToken(user.getId(), user.getEmail(), user.getName(), user.getRole());
-        return new AuthResponse(token);
+        String accessToken = jwtUtil.createAccessToken(user.getId(), user.getEmail(), user.getName(), user.getRole());
+        String refreshToken = refreshTokenService.createRefreshToken(user);
+        return new AuthResponse(accessToken, refreshToken);
+    }
+
+    @Transactional
+    public AuthResponse refresh(RefreshRequest request) {
+        User user = refreshTokenService.extractUser(request.getRefreshToken());
+        String accessToken = jwtUtil.createAccessToken(user.getId(), user.getEmail(), user.getName(), user.getRole());
+        String refreshToken = refreshTokenService.createRefreshToken(user);
+        return new AuthResponse(accessToken, refreshToken);
     }
 
     private void validateEmailInUse(String email) {

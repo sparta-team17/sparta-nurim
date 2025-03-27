@@ -120,12 +120,12 @@ class AuthServiceTest {
 
             given(userRepository.findByEmailAndDeletedAtIsNull(anyString())).willReturn(Optional.of(user));
             given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
-            given(jwtUtil.createToken(any(), anyString(), anyString(), any(UserRole.class))).willReturn(token);
+            given(jwtUtil.createAccessToken(any(), anyString(), anyString(), any(UserRole.class))).willReturn(token);
 
             AuthResponse response = authService.signin(request);
 
             assertNotNull(response);
-            assertEquals(token, response.getBearerToken());
+            assertEquals(token, response.getAccessToken());
         }
     }
 }
