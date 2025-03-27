@@ -1,11 +1,14 @@
 package com.example.nurim.domain.notice.service;
 
-import com.example.nurim.domain.common.exception.InvalidRequestException;
-import com.example.nurim.domain.common.exception.UnauthorizedException;
+import com.example.nurim.config.SchedulerConfig;
+import com.example.nurim.domain.common.exception.CustomException;
+import com.example.nurim.domain.common.exception.ErrorCode;
 import com.example.nurim.domain.notice.dto.response.NoticeResponseDto;
 import com.example.nurim.domain.notice.dto.response.NoticeSearchResponseDto;
 import com.example.nurim.domain.notice.entity.Notice;
+import com.example.nurim.domain.notice.entity.NoticeView;
 import com.example.nurim.domain.notice.repository.NoticeRepository;
+import com.example.nurim.domain.notice.repository.NoticeViewRepository;
 import com.example.nurim.domain.user.entity.User;
 import com.example.nurim.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.Nested;
@@ -20,6 +23,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.sql.Ref;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -35,7 +39,11 @@ class NoticeServiceTest {
     @Mock
     private NoticeRepository noticeRepository;
     @Mock
+    private NoticeViewRepository noticeViewRepository;
+    @Mock
     private UserRepository userRepository;
+    @Mock
+    private SchedulerConfig schedulerConfig;
     @InjectMocks
     private NoticeService noticeService;
 
@@ -63,19 +71,16 @@ class NoticeServiceTest {
         @Test
         void 공지사항_생성_유저조회_실패() {
             Long userId = 1L;
-            String email = "a@test.com";
-            String password = "1234";
-            String name = "이름";
             String title = "제목";
             String contents = "내용";
 
             given(userRepository.findById(anyLong())).willReturn(Optional.empty());
 
-            InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
+            CustomException exception = assertThrows(CustomException.class, () -> {
                 noticeService.createNotice(userId, title, contents);
             });
 
-            assertEquals("존재하지 않는 유저입니다.", exception.getMessage());
+            assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
         }
     }
 
@@ -102,7 +107,7 @@ class NoticeServiceTest {
             ReflectionTestUtils.setField(notice, "title", title);
             ReflectionTestUtils.setField(notice, "contents", contents);
 
-            given(noticeRepository.findById(anyLong())).willReturn(Optional.of(notice));
+            given(noticeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(notice));
 
             NoticeResponseDto responseDto = noticeService.updateNotice(userId, noticeId, updatedTitle, updatedContents);
 
@@ -117,13 +122,13 @@ class NoticeServiceTest {
             String updatedTitle = "수정된 제목";
             String updatedContents = null;
 
-            given(noticeRepository.findById(anyLong())).willReturn(Optional.empty());
+            given(noticeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.empty());
 
-            InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
+            CustomException exception = assertThrows(CustomException.class, () -> {
                 noticeService.updateNotice(userId, noticeId, updatedTitle, updatedContents);
             });
 
-            assertEquals("존재하지 않는 공지사항입니다.", exception.getMessage());
+            assertEquals(ErrorCode.NOTICE_NOT_FOUND, exception.getErrorCode());
         }
 
         @Test
@@ -148,45 +153,13 @@ class NoticeServiceTest {
             ReflectionTestUtils.setField(notice, "title", title);
             ReflectionTestUtils.setField(notice, "contents", contents);
 
-            given(noticeRepository.findById(anyLong())).willReturn(Optional.of(notice));
+            given(noticeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(notice));
 
-            UnauthorizedException exception = assertThrows(UnauthorizedException.class, () -> {
+            CustomException exception = assertThrows(CustomException.class, () -> {
                 noticeService.updateNotice(requestUserId, noticeId, updatedTitle, updatedContents);
             });
 
-            assertEquals("작성자만 수정할 수 있습니다.", exception.getMessage());
-        }
-
-        @Test
-        void 공지사항_업데이트_삭제된_공지사항(){
-            Long userId = 1L;
-            Long noticeId = 1L;
-            String email = "a@test.com";
-            String password = "1234";
-            String name = "이름";
-            String title = "제목";
-            String contents = "내용";
-            String updatedTitle = "수정된 제목";
-            String updatedContents = null;
-            LocalDateTime deletedAt = LocalDateTime.now();
-
-            User user = new User(email, password, name);
-            ReflectionTestUtils.setField(user, "id", userId);
-
-            Notice notice = new Notice();
-            ReflectionTestUtils.setField(notice, "id", noticeId);
-            ReflectionTestUtils.setField(notice, "user", user);
-            ReflectionTestUtils.setField(notice, "title", title);
-            ReflectionTestUtils.setField(notice, "contents", contents);
-            ReflectionTestUtils.setField(notice,"deletedAt", deletedAt);
-
-            given(noticeRepository.findById(anyLong())).willReturn(Optional.of(notice));
-
-            InvalidRequestException exception = assertThrows(InvalidRequestException.class,()->{
-               noticeService.updateNotice(userId, noticeId, updatedTitle, updatedContents);
-            });
-
-            assertEquals("삭제된 공지사항은 수정할 수 없습니다.",exception.getMessage());
+            assertEquals(ErrorCode.NOT_POST_OWNER, exception.getErrorCode());
         }
     }
 
@@ -207,7 +180,7 @@ class NoticeServiceTest {
             ReflectionTestUtils.setField(notice, "id", noticeId);
             ReflectionTestUtils.setField(notice, "user", user);
 
-            given(noticeRepository.findById(anyLong())).willReturn(Optional.of(notice));
+            given(noticeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(notice));
 
             NoticeResponseDto responseDto = noticeService.deleteNotice(userId, noticeId);
 
@@ -220,13 +193,13 @@ class NoticeServiceTest {
             Long userId = 1L;
             Long noticeId = 1L;
 
-            given(noticeRepository.findById(anyLong())).willReturn(Optional.empty());
+            given(noticeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.empty());
 
-            InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
+            CustomException exception = assertThrows(CustomException.class, () -> {
                 noticeService.deleteNotice(userId, noticeId);
             });
 
-            assertEquals("존재하지 않는 공지사항입니다.", exception.getMessage());
+            assertEquals(ErrorCode.NOTICE_NOT_FOUND, exception.getErrorCode());
         }
 
         @Test
@@ -245,38 +218,13 @@ class NoticeServiceTest {
             ReflectionTestUtils.setField(notice, "id", noticeId);
             ReflectionTestUtils.setField(notice, "user", user);
 
-            given(noticeRepository.findById(anyLong())).willReturn(Optional.of(notice));
+            given(noticeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(notice));
 
-            UnauthorizedException exception = assertThrows(UnauthorizedException.class, () -> {
+            CustomException exception = assertThrows(CustomException.class, () -> {
                 noticeService.deleteNotice(requestUserId, noticeId);
             });
 
-            assertEquals("작성자만 삭제할 수 있습니다.", exception.getMessage());
-        }
-
-        @Test
-        void 공지사항_삭제_이미_삭제된_공지사항() {
-            Long userId = 1L;
-            Long noticeId = 1L;
-            String email = "a@test.com";
-            String password = "1234";
-            String name = "이름";
-            LocalDateTime deletedAt = LocalDateTime.now();
-            User user = new User(email, password, name);
-            ReflectionTestUtils.setField(user, "id", userId);
-
-            Notice notice = new Notice();
-            ReflectionTestUtils.setField(notice, "id", noticeId);
-            ReflectionTestUtils.setField(notice, "user", user);
-            ReflectionTestUtils.setField(notice, "deletedAt", deletedAt);
-
-            given(noticeRepository.findById(anyLong())).willReturn(Optional.of(notice));
-
-            InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
-                noticeService.deleteNotice(userId, noticeId);
-            });
-
-            assertEquals("이미 삭제된 공지사항입니다.", exception.getMessage());
+            assertEquals(ErrorCode.NOT_POST_OWNER, exception.getErrorCode());
         }
     }
 
@@ -302,42 +250,58 @@ class NoticeServiceTest {
             ReflectionTestUtils.setField(notice, "title", title);
             ReflectionTestUtils.setField(notice, "contents", contents);
 
-            given(noticeRepository.findById(anyLong())).willReturn(Optional.of(notice));
+            given(noticeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.of(notice));
 
-            NoticeResponseDto responseDto = noticeService.findNotice(noticeId);
+            NoticeResponseDto responseDto = noticeService.findNoticeWithDb(noticeId, userId);
 
             assertThat(responseDto).isNotNull();
             assertThat(responseDto.getNoticeId()).isEqualTo(noticeId);
 
         }
         @Test
-        void 공지사항_상세조회_조회실패(){
+        void 공지사항_상세조회_실패(){
             Long noticeId = 1L;
+            Long userId = 1L;
 
-            given(noticeRepository.findById(anyLong())).willReturn(Optional.empty());
+            given(noticeRepository.findByIdAndDeletedAtIsNull(anyLong())).willReturn(Optional.empty());
 
-            InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
-                noticeService.findNotice(noticeId);
+            CustomException exception = assertThrows(CustomException.class, () -> {
+                noticeService.findNoticeWithDb(noticeId, userId);
             });
 
-            assertEquals("존재하지 않는 공지사항입니다.", exception.getMessage());
+            assertEquals(ErrorCode.NOTICE_NOT_FOUND, exception.getErrorCode());
         }
         @Test
-        void 공지사항_상세조회_삭제된_공지사항(){
+        void 공지사항_스케줄러_실행후_조회수_초기화_검증() {
+            // given
+            Long userId = 1L;
+            String email = "a@test.com";
+            String password = "1234";
+            String name = "이름";
+            User user = new User(email,password,name);
+
             Long noticeId = 1L;
-            LocalDateTime deletedAt = LocalDateTime.now();
-
+            Integer count = 0;
             Notice notice = new Notice();
-            ReflectionTestUtils.setField(notice, "id", noticeId);
-            ReflectionTestUtils.setField(notice, "deletedAt", deletedAt);
+            ReflectionTestUtils.setField(notice,"id", noticeId);
+            ReflectionTestUtils.setField(notice, "count", count);
+            ReflectionTestUtils.setField(notice,"user",user);
 
-            given(noticeRepository.findById(anyLong())).willReturn(Optional.of(notice));
+            given(noticeRepository.findByIdAndDeletedAtIsNull(noticeId)).willReturn(Optional.of(notice));
+            given(noticeViewRepository.existsByUserIdAndNoticeId(userId, noticeId)).willReturn(false);
 
-            InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
-                noticeService.findNotice(noticeId);
-            });
+            // 첫 조회
+            // 조회수 초기화
+            NoticeResponseDto firstResponse = noticeService.findNoticeWithDb(noticeId, userId);
+            assertEquals(1, firstResponse.getCount()); // 조회수 1 확인
 
-            assertEquals("삭제된 공지사항입니다.", exception.getMessage());
+            // 스케줄러 실행 (조회 기록 초기화)
+            schedulerConfig.clearNoticeViews();
+            // 초기화 후 두번째 조회
+            NoticeResponseDto secondResponse = noticeService.findNoticeWithDb(noticeId, userId);
+
+            // then
+            assertEquals(2, secondResponse.getCount()); // 조회수 2 확인
         }
     }
 
@@ -350,12 +314,13 @@ class NoticeServiceTest {
             int size = 5;
             String keyword = "공지";
             String userName = "관리자";
+            Integer count = 123;
             LocalDateTime createdAt = LocalDateTime.now();
             Pageable pageable = PageRequest.of(page - 1, size);
 
             List<NoticeSearchResponseDto> noticeList = List.of(
-                    new NoticeSearchResponseDto(1L, "공지사항1", createdAt,userName),
-                    new NoticeSearchResponseDto(2L, "공지사항2", createdAt,userName)
+                    new NoticeSearchResponseDto(1L, "공지사항1",count, createdAt,userName),
+                    new NoticeSearchResponseDto(2L, "공지사항2",count, createdAt,userName)
             );
             Page<NoticeSearchResponseDto> mockPage = new PageImpl<>(noticeList, pageable, noticeList.size());
 

@@ -2,9 +2,11 @@ package com.example.nurim.domain.notice.entity;
 
 import com.example.nurim.domain.common.entity.Timestamped;
 import com.example.nurim.domain.user.entity.User;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -25,12 +27,16 @@ public class Notice extends Timestamped {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Setter
     private LocalDateTime deletedAt;
+    @Setter
+    private Integer count;
 
     public Notice(String title, String contents, User user) {
         this.title = title;
         this.contents = contents;
         this.user = user;
+        this.count = 0;
     }
 
     public void updateNotice(String title,String contents){
@@ -41,8 +47,7 @@ public class Notice extends Timestamped {
             this.contents = contents;
         }
     }
-
-    public void setDeletedAt(){
-        this.deletedAt = LocalDateTime.now();
+    public void addCount(){
+        this.count++;
     }
 }

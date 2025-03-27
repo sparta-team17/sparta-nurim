@@ -1,4 +1,4 @@
-package com.example.nurim.config;
+package com.example.nurim.domain.common.exception;
 
 import com.example.nurim.domain.auth.exception.AuthException;
 import com.example.nurim.domain.user.exception.UserException;

@@ -29,6 +29,7 @@ public class NoticeRepositoryQueryImpl implements NoticeRepositoryQuery{
                 .select(new QNoticeSearchResponseDto(
                         notice.id,
                         notice.title,
+                        notice.count,
                         notice.createdAt,
                         user.name
                 ))
