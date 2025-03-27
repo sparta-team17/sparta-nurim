@@ -16,7 +16,7 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
-public class AdminAccessDeniedHandler implements AccessDeniedHandler {
+public class UserAccessDeniedHandler implements AccessDeniedHandler {
 
     private final ObjectMapper objectMapper;
 
@@ -26,7 +26,7 @@ public class AdminAccessDeniedHandler implements AccessDeniedHandler {
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
-        Map<String, Object> errorResponse = ErrorResponseUtil.getErrorResponse(HttpStatus.FORBIDDEN, "Admin Access Denied");
+        Map<String, Object> errorResponse = ErrorResponseUtil.getErrorResponse(HttpStatus.FORBIDDEN, "Access Denied");
         objectMapper.writeValue(response.getWriter(), errorResponse);
     }
 }

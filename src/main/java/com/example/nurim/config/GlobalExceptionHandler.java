@@ -1,6 +1,7 @@
 package com.example.nurim.config;
 
 import com.example.nurim.domain.auth.exception.AuthException;
+import com.example.nurim.domain.user.exception.UserException;
 import com.example.nurim.domain.common.exception.BadRequestException;
 import com.example.nurim.domain.common.exception.ForbiddenException;
 import com.example.nurim.domain.common.exception.GoneException;
@@ -14,6 +15,10 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler
+    public ResponseEntity<Map<String, Object>> handleUserException(UserException e) {
+        return getErrorResponse(e.getStatus(), e.getMessage());
+    }
 
     @ExceptionHandler
     public ResponseEntity<Map<String, Object>> handleAuthException(AuthException e) {
@@ -43,6 +48,5 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> getErrorResponse(HttpStatus status, String message) {
         Map<String, Object> errorResponse = ErrorResponseUtil.getErrorResponse(status, message);
         return new ResponseEntity<>(errorResponse, status);
-
     }
 }
