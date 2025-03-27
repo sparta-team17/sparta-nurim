@@ -47,10 +47,23 @@ class UserServiceTest {
     @Order(1)
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
     class UpdateNameTests {
+
+        private final UpdateNameRequest request = new UpdateNameRequest("newName");
+
         @Test
         @Order(1)
-        void 사용자_이름_수정_성공() {
-            UpdateNameRequest request = new UpdateNameRequest("newName");
+        void 이름_수정_사용자_없음_실패() {
+            given(userRepository.findActiveByIdOrElseThrow(anyLong()))
+                    .willThrow(new UserException(HttpStatus.NOT_FOUND, "User not found"));
+
+            UserException thrown = assertThrows(UserException.class, () -> userService.updateName(1L, request));
+            assertEquals(HttpStatus.NOT_FOUND, thrown.getStatus());
+            assertEquals("User not found", thrown.getMessage());
+        }
+
+        @Test
+        @Order(2)
+        void 이름_수정_성공() {
             User user = new User("temp@gmail.com", "encodedPassword", "name");
 
             given(userRepository.findActiveByIdOrElseThrow(anyLong())).willReturn(user);
@@ -70,6 +83,19 @@ class UserServiceTest {
 
         @Test
         @Order(1)
+        void 비밀번호_수정_사용자_없음_실패() {
+            UpdatePasswordRequest request = new UpdatePasswordRequest("oldPassword", "newPassword");
+
+            given(userRepository.findActiveByIdOrElseThrow(anyLong()))
+                    .willThrow(new UserException(HttpStatus.NOT_FOUND, "User not found"));
+
+            UserException thrown = assertThrows(UserException.class, () -> userService.updatePassword(1L, request));
+            assertEquals(HttpStatus.NOT_FOUND, thrown.getStatus());
+            assertEquals("User not found", thrown.getMessage());
+        }
+
+        @Test
+        @Order(2)
         void 비밀번호_수정_현재비밀번호_불일치_실패() {
             UpdatePasswordRequest request = new UpdatePasswordRequest("oldPassword", "newPassword");
 
@@ -82,7 +108,7 @@ class UserServiceTest {
         }
 
         @Test
-        @Order(2)
+        @Order(3)
         void 비밀번호_수정_새비밀번호_현재비밀번호_일치_실패() {
             UpdatePasswordRequest request = new UpdatePasswordRequest("samePassword", "samePassword");
 
@@ -95,7 +121,7 @@ class UserServiceTest {
         }
 
         @Test
-        @Order(3)
+        @Order(4)
         void 비밀번호_수정_성공() {
             String newEncodedPassword = "newEncodedPassword";
             UpdatePasswordRequest request = new UpdatePasswordRequest("oldPassword", "newPassword");
@@ -119,6 +145,17 @@ class UserServiceTest {
 
         @Test
         @Order(1)
+        void 회원탈퇴_사용자_없음_실패() {
+            given(userRepository.findActiveByIdOrElseThrow(anyLong()))
+                    .willThrow(new UserException(HttpStatus.NOT_FOUND, "User not found"));
+
+            UserException thrown = assertThrows(UserException.class, () -> userService.deleteUser(1L));
+            assertEquals(HttpStatus.NOT_FOUND, thrown.getStatus());
+            assertEquals("User not found", thrown.getMessage());
+        }
+
+        @Test
+        @Order(2)
         void 회원탈퇴_사용하지_않은_신청정보_존재_실패() {
             given(userRepository.findActiveByIdOrElseThrow(anyLong())).willReturn(user);
             given(applicationRepository.existsUnusedApplicationByUserId(anyLong())).willReturn(true);
@@ -129,7 +166,7 @@ class UserServiceTest {
         }
 
         @Test
-        @Order(2)
+        @Order(3)
         void 회원탈퇴_성공() {
             given(userRepository.findActiveByIdOrElseThrow(anyLong())).willReturn(user);
             given(applicationRepository.existsUnusedApplicationByUserId(anyLong())).willReturn(false);
