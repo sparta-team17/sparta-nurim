@@ -176,7 +176,7 @@ public class ReviewService {
     }
 
     private void validateApplicationCancelled(Application findApplication) {
-        if (findApplication.getStatus().equals(ApplicationStatus.CANCLE)) {
+        if (findApplication.getStatus().equals(ApplicationStatus.CANCEL)) {
             throw new CustomException(ErrorCode.APPLICATION_CANCELLED);
         }
     }

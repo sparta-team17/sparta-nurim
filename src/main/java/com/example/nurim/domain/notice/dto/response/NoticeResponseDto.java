@@ -16,6 +16,7 @@ public class NoticeResponseDto {
     private String name;
     private String title;
     private String contents;
+    private Integer count;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deleteAt;
@@ -27,6 +28,7 @@ public class NoticeResponseDto {
                 .name(notice.getUser().getName())
                 .title(notice.getTitle())
                 .contents(notice.getContents())
+                .count(notice.getCount())
                 .createdAt(notice.getCreatedAt())
                 .updatedAt(notice.getUpdatedAt())
                 .deleteAt(notice.getDeletedAt())
