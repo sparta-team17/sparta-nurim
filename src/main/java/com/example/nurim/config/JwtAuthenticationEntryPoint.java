@@ -1,7 +1,7 @@
 package com.example.nurim.config;
 
+import com.example.nurim.domain.common.exception.ErrorResponseUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
