@@ -1,43 +1,29 @@
 package com.example.nurim.domain.auth.entity;
 
-import com.example.nurim.domain.user.entity.User;
-import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.redis.core.RedisHash;
+import org.springframework.data.redis.core.TimeToLive;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
-@Entity
+@RedisHash("token")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RefreshToken {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false)
     private String token;
-
-    @Column(nullable = false)
     private LocalDateTime expiredAt;
+    private UserInfo userInfo;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @TimeToLive
+    public Long getExpiration() {
+        return ChronoUnit.SECONDS.between(LocalDateTime.now(), expiredAt);
+    }
 
-    public RefreshToken(String token, LocalDateTime expiredAt, User user) {
+    public RefreshToken(String token, LocalDateTime expiredAt, UserInfo userInfo) {
         this.token = token;
         this.expiredAt = expiredAt;
-        this.user = user;
-    }
-
-    public boolean isNew() {
-        return id == null;
-    }
-
-    public void update(String newToken, LocalDateTime expiredAt) {
-        this.token = newToken;
-        this.expiredAt = expiredAt;
+        this.userInfo = userInfo;
     }
 }

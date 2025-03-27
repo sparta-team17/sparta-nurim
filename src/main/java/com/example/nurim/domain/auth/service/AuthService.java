@@ -5,6 +5,7 @@ import com.example.nurim.domain.auth.dto.request.RefreshRequest;
 import com.example.nurim.domain.auth.dto.request.SigninRequest;
 import com.example.nurim.domain.auth.dto.request.SignupRequest;
 import com.example.nurim.domain.auth.dto.response.AuthResponse;
+import com.example.nurim.domain.auth.entity.UserInfo;
 import com.example.nurim.domain.auth.exception.AuthException;
 import com.example.nurim.domain.user.entity.User;
 import com.example.nurim.domain.user.repository.UserRepository;
@@ -42,16 +43,15 @@ public class AuthService {
         validatePassword(request.getPassword(), user.getPassword());
 
         String accessToken = jwtUtil.createAccessToken(user.getId(), user.getEmail(), user.getName(), user.getRole());
-        String refreshToken = refreshTokenService.createRefreshToken(user);
+        String refreshToken = refreshTokenService.createRefreshToken(UserInfo.of(user));
         return new AuthResponse(accessToken, refreshToken);
     }
 
     @Transactional
     public AuthResponse refresh(RefreshRequest request) {
-        User user = refreshTokenService.extractUser(request.getRefreshToken());
-        String accessToken = jwtUtil.createAccessToken(user.getId(), user.getEmail(), user.getName(), user.getRole());
-        String refreshToken = refreshTokenService.createRefreshToken(user);
-        return new AuthResponse(accessToken, refreshToken);
+        UserInfo userInfo = refreshTokenService.extractUserInfo(request.getRefreshToken());
+        String accessToken = jwtUtil.createAccessToken(userInfo.getId(), userInfo.getEmail(), userInfo.getName(), userInfo.getRole());
+        return new AuthResponse(accessToken, request.getRefreshToken());
     }
 
     private void validateEmailInUse(String email) {
