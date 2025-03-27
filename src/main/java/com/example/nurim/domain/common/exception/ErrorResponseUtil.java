@@ -1,4 +1,4 @@
-package com.example.nurim.config;
+package com.example.nurim.domain.common.exception;
 
 import org.springframework.http.HttpStatus;
 
