@@ -11,7 +11,6 @@ public interface ProgramRepositoryQuery {
   Page<ProgramListRequestDto> findProgramList(
       String title, String location,
       ProgramStatus status,
-      LocalDateTime dateTime,
       Pageable pageable
   );
 }

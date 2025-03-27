@@ -81,8 +81,8 @@ public class Program extends Timestamped {
     }
 
     // 소프트 딜리트
-    public void delete(){
-        this.deletedAt = LocalDateTime.now();
+    public void delete(LocalDateTime now) {
+        deletedAt = now;
     }
 
 }

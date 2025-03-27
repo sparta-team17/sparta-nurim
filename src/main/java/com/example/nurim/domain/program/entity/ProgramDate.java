@@ -37,7 +37,7 @@ public class ProgramDate extends Timestamped {
         this.status = ProgramDateStatus.RECRUITING; // 초기값을 모집중으로 설정
     }
 
-    public void updateClose(){
-        this.status = ProgramDateStatus.CLOSED;
+    public void updateClose(ProgramDateStatus status){
+        this.status = status;
     }
 }

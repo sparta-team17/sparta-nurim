@@ -10,10 +10,8 @@ import java.util.Optional;
 
 public interface ProgramRepository extends JpaRepository<Program, Long>, ProgramRepositoryQuery {
   // 삭제된 프로그램 빼고 모두 조회
-  @Query("SELECT p FROM Program p WHERE p.deletedAt Is NULL")
-  List<Program> findAllNotDeleted();
+  List<Program> findAllByDeletedAtIsNull();
 
-  @Query("SELECT p FROM Program p WHERE p.id = :id AND p.deletedAt IS NULL")
-  Optional<Program> findByIdNotDeleted(@Param("id") Long id);
+  Optional<Program> findByIdAndDeletedAtIsNull(Long id);
 
 }

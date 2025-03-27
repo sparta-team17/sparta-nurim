@@ -23,7 +23,7 @@ public class ProgramRepositoryQueryImpl implements ProgramRepositoryQuery{
   private final JPAQueryFactory jpaQueryFactory;
 
   @Override
-  public Page<ProgramListRequestDto> findProgramList(String title, String location, ProgramStatus status, LocalDateTime usageDate, Pageable pageable) {
+  public Page<ProgramListRequestDto> findProgramList(String title, String location, ProgramStatus status,  Pageable pageable) {
     QProgram program = QProgram.program;
     QProgramDate programDate = QProgramDate.programDate;
     QCategory category = QCategory.category;
@@ -40,34 +40,28 @@ public class ProgramRepositoryQueryImpl implements ProgramRepositoryQuery{
             program.registrationStartDate,
             program.registrationEndDate
         ))
-        .from(program,programDate)
+        .from(program)
         .leftJoin(program.category, category)
-        .where( //제목, 장소, 상태 , 접수 일정 조건
-            title != null ? program.title.containsIgnoreCase(title) : null,
-            location != null ? program.location.containsIgnoreCase(location) : null,
-            status != null ? program.status.eq(status) : null,
-            usageDate != null ? programDate.program.id.eq(program.id)
-                .and(programDate.date.year().eq(usageDate.getYear()))
-                .and(programDate.date.month().eq(usageDate.getMonthValue()))
-                .and(programDate.date.dayOfMonth().eq(usageDate.getDayOfMonth())) : null,
-            program.deletedAt.isNull()
-        )
-        .orderBy(program.createdAt.desc())
-        .offset(pageable.getOffset())
-        .limit(pageable.getPageSize())
-        .fetch();
-    // 전체 개수 조회
-    long total = Optional.ofNullable(jpaQueryFactory
-        .select(program.count())
-        .from(program, programDate)
+        .distinct() // 중복 제거
         .where(
             title != null ? program.title.containsIgnoreCase(title) : null,
             location != null ? program.location.containsIgnoreCase(location) : null,
             status != null ? program.status.eq(status) : null,
-            usageDate != null ? programDate.program.id.eq(program.id)
-                .and(programDate.date.year().eq(usageDate.getYear()))
-                .and(programDate.date.month().eq(usageDate.getMonthValue()))
-                .and(programDate.date.dayOfMonth().eq(usageDate.getDayOfMonth())) : null,
+            program.deletedAt.isNull()
+        )
+        .orderBy(program.registrationStartDate.desc())
+        .offset(pageable.getOffset())
+        .limit(pageable.getPageSize())
+        .fetch();
+
+    long total = Optional.ofNullable(jpaQueryFactory
+        .select(program.countDistinct())
+        .from(program)
+        .leftJoin(program.category, category)
+        .where(
+            title != null ? program.title.containsIgnoreCase(title) : null,
+            location != null ? program.location.containsIgnoreCase(location) : null,
+            status != null ? program.status.eq(status) : null,
             program.deletedAt.isNull()
         )
         .fetchOne()).orElse(0L);
