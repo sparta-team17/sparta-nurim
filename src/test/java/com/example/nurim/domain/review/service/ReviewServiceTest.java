@@ -171,7 +171,7 @@ class ReviewServiceTest {
             Long applicationId = 1L;
             double rating = 5.0;
             String contents = "리뷰내용";
-            ApplicationStatus status = ApplicationStatus.CANCLE;
+            ApplicationStatus status = ApplicationStatus.CANCEL;
 
             ReviewSaveRequestDto requestDto = new ReviewSaveRequestDto(rating, contents);
 
@@ -266,7 +266,7 @@ class ReviewServiceTest {
             // When, Then
             CustomException thrown = assertThrows(CustomException.class, () -> reviewService.createReview(userId, applicationId, requestDto));
             assertThat(HttpStatus.NOT_FOUND).isEqualTo(thrown.getStatus());
-            assertThat("존재하지 않는 일정입니다.").isEqualTo(thrown.getMessage());
+            assertThat("존재하지 않는 프로그램 일정입니다.").isEqualTo(thrown.getMessage());
         }
 
         @Test
