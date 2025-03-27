@@ -1,7 +1,6 @@
 package com.example.nurim.domain.common.exception;
 
 import com.example.nurim.domain.auth.exception.AuthException;
-import com.example.nurim.domain.user.exception.UserException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -11,10 +10,6 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    @ExceptionHandler
-    public ResponseEntity<Map<String, Object>> handleUserException(UserException e) {
-        return getErrorResponse(e.getStatus(), e.getMessage());
-    }
 
     @ExceptionHandler
     public ResponseEntity<Map<String, Object>> handleAuthException(AuthException e) {
