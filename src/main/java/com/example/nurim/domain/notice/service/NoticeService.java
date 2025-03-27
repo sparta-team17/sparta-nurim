@@ -16,10 +16,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -30,7 +32,7 @@ public class NoticeService {
     private final NoticeViewRepository noticeViewRepository;
     private final UserRepository userRepository;
 
-    private RedisTemplate<String, Integer> redisTemplate;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Transactional
     public NoticeResponseDto createNotice(Long userId, String title, String contents) {
@@ -76,19 +78,44 @@ public class NoticeService {
             noticeViewRepository.save(new NoticeView(notice.getId(), userId));
             notice.addCount();
         }
-
         return NoticeResponseDto.fromEntity(notice);
     }
 
-    @Transactional
-    public NoticeResponseDto findNoticeWithCache(Long noticeId) {
-        Notice notice = noticeRepository.findByIdAndDeletedAtIsNull(noticeId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
-        return NoticeResponseDto.fromEntity(notice);
-    }
+
 
     public Page<NoticeSearchResponseDto> findNotices(int page, int size, String keyword) {
         Pageable pageable = PageRequest.of(page - 1, size);
         return noticeRepository.findNotices(keyword, pageable);
+    }
+    @Transactional
+    public NoticeResponseDto findNoticeWithCache(Long noticeId, Long userId) {
+        Notice notice = noticeRepository.findByIdAndDeletedAtIsNull(noticeId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
+        increaseViewCount(noticeId,userId);
+        notice.setCount(getViewCount(noticeId).intValue());
+        log.info("count = {}",getViewCount(noticeId).intValue());
+        return NoticeResponseDto.fromEntity(notice);
+    }
+    public boolean isViewed(Long noticeId, Long userId) {
+        String key = "user:" + userId + ":notice:" + noticeId;
+        return redisTemplate.opsForValue().get(key) != null;
+    }
+    public void addView(Long noticeId, Long userId) {
+        String key = "user:" + userId + ":notice:" + noticeId;
+        redisTemplate.opsForValue().set(key, "viewed");
+    }
+    public void increaseViewCount(Long noticeId, Long userId) {
+        if (!isViewed(noticeId, userId)) {
+            String key = "viewRank";
+            String value = "notice:" + noticeId + ":viewCount";
+            redisTemplate.opsForZSet().incrementScore(key, value,1);
+            addView(noticeId, userId);
+        }
+    }
+    public Double getViewCount(Long noticeId) {
+        String key = "viewRank";
+        String value = "notice:" + noticeId + ":viewCount";
+        Double viewCount = redisTemplate.opsForZSet().score(key, value);
+        return (viewCount != null) ? viewCount : 0.0;
     }
 }

@@ -29,7 +29,7 @@ public class Notice extends Timestamped {
 
     @Setter
     private LocalDateTime deletedAt;
-
+    @Setter
     private Integer count;
 
     public Notice(String title, String contents, User user) {

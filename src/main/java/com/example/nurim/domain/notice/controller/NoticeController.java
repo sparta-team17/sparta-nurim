@@ -23,8 +23,9 @@ public class NoticeController {
     }
 
     @GetMapping("/v2/{noticeId}")
-    public ResponseEntity<NoticeResponseDto> findNoticeWithCache(@PathVariable Long noticeId) {
-        return ResponseEntity.ok(noticeService.findNoticeWithCache(noticeId));
+    public ResponseEntity<NoticeResponseDto> findNoticeWithCache(@PathVariable Long noticeId,
+                                                                 @AuthenticationPrincipal AuthUser authUser) {
+        return ResponseEntity.ok(noticeService.findNoticeWithCache(noticeId, authUser.getId()));
     }
 
     @GetMapping
