@@ -1,17 +1,19 @@
 package com.example.nurim.domain.program.entity;
 
+import com.example.nurim.domain.common.entity.Timestamped;
 import com.example.nurim.domain.program.enums.ProgramStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @NoArgsConstructor
 @Entity
 @Getter
 @Table(name = "programs")
-public class Program {
+public class Program extends Timestamped {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -36,24 +38,12 @@ public class Program {
     @Column(nullable = false)
     private ProgramStatus status; // 접수중, 접수종료
 
-    @Column(name = "usage_start_date", nullable = false)
-    private LocalDateTime usageStartDate;
-
-    @Column(name = "usage_end_date", nullable = false)
-    private LocalDateTime usageEndDate;
-
-
     @Column(name = "registration_start_date", nullable = false)
-    private LocalDateTime registrationStartDate;
+    private LocalDateTime registrationStartDate; // 접수 시작일
 
     @Column(name = "registration_end_date", nullable = false)
-    private LocalDateTime registrationEndDate;
+    private LocalDateTime registrationEndDate; // 접수 마감일
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
@@ -61,15 +51,13 @@ public class Program {
     @Column(length = 50)
     private String phone;
 
-    public Program(Category category, String title, String location, Long quota, String detail, ProgramStatus status, LocalDateTime usageStartDate, LocalDateTime usageEndDate, LocalDateTime registrationStartDate, LocalDateTime registrationEndDate, String phone) {
+    public Program(Category category, String title, String location, Long quota, String detail, ProgramStatus status,  LocalDateTime registrationStartDate, LocalDateTime registrationEndDate, String phone) {
         this.category = category;
         this.title = title;
         this.location = location;
         this.quota = quota;
         this.detail = detail;
         this.status = status;
-        this.usageStartDate = usageStartDate;
-        this.usageEndDate = usageEndDate;
         this.registrationStartDate = registrationStartDate;
         this.registrationEndDate = registrationEndDate;
         this.phone = phone;
@@ -77,29 +65,24 @@ public class Program {
     }
 
     // 프로그램 수정(상태값 제외)
-    public void update(Category category, String title, String location, Long quota, String detail, LocalDateTime usageStartDate, LocalDateTime usageEndDate, LocalDateTime registrationStartDate, LocalDateTime registrationEndDate, String phone) {
+    public void update(Category category, String title, String location, Long quota, String detail,  LocalDateTime registrationStartDate, LocalDateTime registrationEndDate, String phone) {
         this.category = category;
         this.title = title;
         this.location = location;
         this.quota = quota;
         this.detail = detail;
-        this.usageStartDate = usageStartDate;
-        this.usageEndDate = usageEndDate;
         this.registrationStartDate = registrationStartDate;
         this.registrationEndDate = registrationEndDate;
         this.phone = phone;
-        this.updatedAt = LocalDateTime.now();
     }
 
-    // 프로그램 상태값만 수정
-    public void updateStatus(ProgramStatus status){
+    public void updateStatus(ProgramStatus status) {
         this.status = status;
-        this.updatedAt = LocalDateTime.now();
     }
 
     // 소프트 딜리트
-    public void delete(){
-        this.deletedAt = LocalDateTime.now();
+    public void delete(LocalDateTime now) {
+        deletedAt = now;
     }
 
 }
