@@ -158,7 +158,7 @@ public class ReviewService {
     }
 
     private void validateReviewExists(Long userId, ProgramDate findProgramDate) {
-        if (reviewRepository.existsReviewByUser_IdAndProgramDate_Id(userId, findProgramDate.getId())) {
+        if (reviewRepository.existsReviewByUserIdAndProgramDateId(userId, findProgramDate.getId())) {
             throw new CustomException(ErrorCode.EXIST_REVIEW);
         }
     }

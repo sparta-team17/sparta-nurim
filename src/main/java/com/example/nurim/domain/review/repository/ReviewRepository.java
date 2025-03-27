@@ -26,5 +26,5 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     Optional<Review> findReviewByIdAndDeletedAtIsNull(@Param("reviewId") Long reviewId);
 
-    boolean existsReviewByUser_IdAndProgramDate_Id(@Param("userId") Long userId, @Param("programDateId") Long programDateId);
+    boolean existsReviewByUserIdAndProgramDateId(@Param("userId") Long userId, @Param("programDateId") Long programDateId);
 }
