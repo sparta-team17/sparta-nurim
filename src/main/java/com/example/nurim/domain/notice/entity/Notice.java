@@ -2,9 +2,11 @@ package com.example.nurim.domain.notice.entity;
 
 import com.example.nurim.domain.common.entity.Timestamped;
 import com.example.nurim.domain.user.entity.User;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.redis.core.RedisHash;
 
 import java.time.LocalDateTime;
 
@@ -27,10 +29,13 @@ public class Notice extends Timestamped {
 
     private LocalDateTime deletedAt;
 
+    private Integer count;
+
     public Notice(String title, String contents, User user) {
         this.title = title;
         this.contents = contents;
         this.user = user;
+        this.count = 0;
     }
 
     public void updateNotice(String title,String contents){

@@ -1,8 +1,6 @@
-package com.example.nurim.config;
+package com.example.nurim.domain.common.exception;
 
 import com.example.nurim.domain.auth.exception.AuthException;
-import com.example.nurim.domain.common.exception.InvalidRequestException;
-import com.example.nurim.domain.common.exception.UnauthorizedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
