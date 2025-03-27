@@ -2,6 +2,7 @@ package com.example.nurim.domain.program.repository;
 
 import com.example.nurim.domain.program.entity.Program;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -14,4 +15,12 @@ public interface ProgramRepository extends JpaRepository<Program, Long>, Program
 
   Optional<Program> findByIdAndDeletedAtIsNull(Long id);
 
+  // 조회수 증가
+  @Modifying
+  @Query("UPDATE Program p SET p.viewCount = p.viewCount + 1 WHERE p.id = :programId")
+  void incrementViewCount(@Param("programId") Long programId);
+
+  // 조회수 가져오기
+  @Query("SELECT p.viewCount FROM Program p WHERE p.id = :programId AND p.deletedAt IS NULL")
+  Long getViewCount(@Param("programId") Long programId);
 }

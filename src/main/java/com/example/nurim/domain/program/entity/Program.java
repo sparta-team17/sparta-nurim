@@ -51,6 +51,9 @@ public class Program extends Timestamped {
     @Column(length = 50)
     private String phone;
 
+    @Column(name = "view_count")
+    private Long viewCount = 0L;
+
     public Program(Category category, String title, String location, Long quota, String detail, ProgramStatus status,  LocalDateTime registrationStartDate, LocalDateTime registrationEndDate, String phone) {
         this.category = category;
         this.title = title;
@@ -84,5 +87,6 @@ public class Program extends Timestamped {
     public void delete(LocalDateTime now) {
         deletedAt = now;
     }
+
 
 }

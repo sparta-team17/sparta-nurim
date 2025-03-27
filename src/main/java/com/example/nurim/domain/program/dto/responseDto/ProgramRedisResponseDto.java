@@ -9,7 +9,7 @@ import java.util.List;
 
 @Getter
 @AllArgsConstructor
-public class ProgramDatesResponseDto {
+public class ProgramRedisResponseDto {
   private Long id;
   private String title;
   private String location;

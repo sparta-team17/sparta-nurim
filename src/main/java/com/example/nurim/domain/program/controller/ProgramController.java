@@ -4,6 +4,7 @@ import com.example.nurim.domain.program.dto.requestDto.ProgramSearchRequestDto;
 import com.example.nurim.domain.program.dto.responseDto.*;
 
 import com.example.nurim.domain.program.service.ProgramService;
+import com.example.nurim.domain.redis.RedisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 
@@ -20,6 +21,7 @@ import java.time.LocalDateTime;
 public class ProgramController {
 
   private final ProgramService programService;
+  private final RedisService redisService;
 
   // 프로그램 전체 목록 조회
   @GetMapping
@@ -34,6 +36,14 @@ public class ProgramController {
     ProgramDatesResponseDto programDatesResponseDto  = programService.findAll(programId);
     return new ResponseEntity<>(programDatesResponseDto,HttpStatus.OK);
   }
+
+  // 프로그램 모든 데이터 조회(레디스)
+  @GetMapping("/{programId}/redis")
+  public ResponseEntity<ProgramRedisResponseDto> findAllRedis(@PathVariable Long programId) {
+    ProgramRedisResponseDto programRedisResponseDto  = programService.findAllRedis(programId);
+    return new ResponseEntity<>(programRedisResponseDto,HttpStatus.OK);
+  }
+
 
 }
 

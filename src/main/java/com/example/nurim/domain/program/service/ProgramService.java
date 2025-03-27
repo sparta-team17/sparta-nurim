@@ -16,6 +16,7 @@ import com.example.nurim.domain.program.exception.ProgramException;
 import com.example.nurim.domain.program.repository.CategoryRepository;
 import com.example.nurim.domain.program.repository.ProgramDateRepository;
 import com.example.nurim.domain.program.repository.ProgramRepository;
+import com.example.nurim.domain.redis.RedisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,6 +35,7 @@ public class ProgramService {
   private final ProgramRepository programRepository;
   private final CategoryRepository categoryRepository;
   private final ProgramDateRepository programDateRepository;
+  private final RedisService redisService;
 
   // 프로그램 등록
   @Transactional
@@ -90,9 +92,16 @@ public class ProgramService {
   }
 
   // 프로그램의 일정 조회
+  @Transactional
   public ProgramDatesResponseDto findAll(Long programId) {
     Program findProgram = programRepository.findByIdAndDeletedAtIsNull(programId)
         .orElseThrow(() -> new CustomException(ErrorCode.PROGRAM_NOT_FOUND));
+
+     //  조회수 증가
+    programRepository.incrementViewCount(programId);
+
+    // DB에서 조회수 조회
+    Long viewCount = programRepository.getViewCount(programId);
 
     List<ProgramDate> programDates = programDateRepository.findAllByProgram(findProgram);
 
@@ -118,7 +127,8 @@ public class ProgramService {
         findProgram.getQuota(),
         findProgram.getRegistrationStartDate(),
         findProgram.getRegistrationEndDate(),
-        programDateInfoDtos
+        programDateInfoDtos,
+        viewCount
     );
   }
 
@@ -232,4 +242,45 @@ public class ProgramService {
     }
     return true;
   }
+  // 레디스 사용
+  public ProgramRedisResponseDto findAllRedis(Long programId){
+    Program findProgram = programRepository.findByIdAndDeletedAtIsNull(programId)
+        .orElseThrow(() -> new CustomException(ErrorCode.PROGRAM_NOT_FOUND));
+
+    List<ProgramDate> programDates = programDateRepository.findAllByProgram(findProgram);
+
+    List<ProgramDateInfoDto> programDateInfoDtos = new ArrayList<>();
+
+    for (ProgramDate date : programDates) {
+      ProgramDateInfoDto programDateInfoDto = new ProgramDateInfoDto(
+          date.getDate().toLocalDate(),
+          date.getCount(),
+          findProgram.getQuota(),
+          date.getStatus()
+      );
+      programDateInfoDtos.add(programDateInfoDto);
+    }
+
+    // Redis에서 조회수 증가
+    String programKey = "program:" + programId + ":views";
+    redisService.incrementViewCount(programKey);
+
+    // Redis에서 조회수 가져오기
+    Long viewCount = redisService.getViewCount(programKey);
+
+    return new ProgramRedisResponseDto(
+        findProgram.getId(),
+        findProgram.getTitle(),
+        findProgram.getLocation(),
+        findProgram.getDetail(),
+        findProgram.getPhone(),
+        findProgram.getStatus(),
+        findProgram.getQuota(),
+        findProgram.getRegistrationStartDate(),
+        findProgram.getRegistrationEndDate(),
+        programDateInfoDtos,
+        viewCount
+    );
+  }
+
 }
