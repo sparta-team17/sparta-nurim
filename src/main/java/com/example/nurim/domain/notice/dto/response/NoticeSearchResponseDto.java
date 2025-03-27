@@ -7,15 +7,17 @@ import java.time.LocalDateTime;
 
 @Getter
 public class NoticeSearchResponseDto {
-    private Long noticeId;
-    private String title;
-    private LocalDateTime createdAt;
-    private String userName;
+    private final Long noticeId;
+    private final String title;
+    private final Integer count;
+    private final LocalDateTime createdAt;
+    private final String userName;
 
     @QueryProjection
-    public NoticeSearchResponseDto(Long noticeId, String title, LocalDateTime createdAt, String userName) {
+    public NoticeSearchResponseDto(Long noticeId, String title,Integer count, LocalDateTime createdAt, String userName) {
         this.noticeId = noticeId;
         this.title = title;
+        this.count = count;
         this.createdAt = createdAt;
         this.userName = userName;
     }

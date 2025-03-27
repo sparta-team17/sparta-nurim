@@ -10,10 +10,15 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProgramRepository extends JpaRepository<Program, Long>, ProgramRepositoryQuery {
+
   // 삭제된 프로그램 빼고 모두 조회
   List<Program> findAllByDeletedAtIsNull();
 
   Optional<Program> findByIdAndDeletedAtIsNull(Long id);
+
+  Optional<Program> findProgramByIdAndDeletedAtIsNull(@Param("programId") Long programId);
+
+  boolean existsProgramByIdAndDeletedAtIsNull(@Param("programId") Long programId);
 
   // 조회수 증가
   @Modifying
