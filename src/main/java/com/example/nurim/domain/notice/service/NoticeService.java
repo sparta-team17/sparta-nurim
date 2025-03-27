@@ -1,5 +1,7 @@
 package com.example.nurim.domain.notice.service;
 
+import com.example.nurim.domain.common.exception.CustomException;
+import com.example.nurim.domain.common.exception.ErrorCode;
 import com.example.nurim.domain.common.exception.InvalidRequestException;
 import com.example.nurim.domain.common.exception.UnauthorizedException;
 import com.example.nurim.domain.notice.dto.response.NoticeResponseDto;
@@ -12,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,10 +25,12 @@ public class NoticeService {
     private final NoticeRepository noticeRepository;
     private final UserRepository userRepository;
 
+    private RedisTemplate<String, Integer> redisTemplate;
+
     @Transactional
     public NoticeResponseDto createNotice(Long userId, String title, String contents) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new InvalidRequestException("존재하지 않는 유저입니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         Notice notice = new Notice(title, contents, user);
         noticeRepository.save(notice);
@@ -35,10 +40,10 @@ public class NoticeService {
     @Transactional
     public NoticeResponseDto updateNotice(Long userId, Long noticeId, String title, String contents) {
         Notice notice = noticeRepository.findById(noticeId)
-                .orElseThrow(()-> new InvalidRequestException("존재하지 않는 공지사항입니다."));
+                .orElseThrow(()-> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
 
         if(!notice.getUser().getId().equals(userId)){
-            throw new UnauthorizedException("작성자만 수정할 수 있습니다.");
+            throw new CustomException(ErrorCode.NOT_POST_OWNER);
         }
 
         if(notice.getDeletedAt() != null){
@@ -53,10 +58,10 @@ public class NoticeService {
     @Transactional
     public NoticeResponseDto deleteNotice(Long userId, Long noticeId) {
         Notice notice = noticeRepository.findById(noticeId)
-                .orElseThrow(()-> new InvalidRequestException("존재하지 않는 공지사항입니다."));
+                .orElseThrow(()-> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
 
         if(!notice.getUser().getId().equals(userId)){
-            throw new UnauthorizedException("작성자만 삭제할 수 있습니다.");
+            throw new CustomException(ErrorCode.NOT_POST_OWNER);
         }
 
         if(notice.getDeletedAt() != null){
@@ -68,7 +73,7 @@ public class NoticeService {
 
     public NoticeResponseDto findNotice(Long noticeId) {
         Notice notice = noticeRepository.findById(noticeId)
-                .orElseThrow(()-> new InvalidRequestException("존재하지 않는 공지사항입니다."));
+                .orElseThrow(()-> new CustomException(ErrorCode.NOTICE_NOT_FOUND));
 
         if(notice.getDeletedAt() != null){
             throw new InvalidRequestException("삭제된 공지사항입니다.");

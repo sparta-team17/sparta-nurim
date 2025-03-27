@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -24,8 +25,10 @@ public class User extends Timestamped {
     private String email;
 
     @Column(nullable = false)
+    @Setter
     private String password;
 
+    @Setter
     @Column(nullable = false, length = 100)
     private String name;
 
@@ -38,5 +41,9 @@ public class User extends Timestamped {
         this.email = email;
         this.password = password;
         this.name = name;
+    }
+
+    public void setDeleted() {
+        this.deletedAt = LocalDateTime.now();
     }
 }
