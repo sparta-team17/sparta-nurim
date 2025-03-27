@@ -3,9 +3,7 @@ package com.example.nurim.domain.review.service;
 import com.example.nurim.domain.application.entity.Application;
 import com.example.nurim.domain.application.enums.ApplicationStatus;
 import com.example.nurim.domain.application.repository.ApplicationRepository;
-import com.example.nurim.domain.common.exception.BadRequestException;
-import com.example.nurim.domain.common.exception.ForbiddenException;
-import com.example.nurim.domain.common.exception.NotFoundException;
+import com.example.nurim.domain.common.exception.*;
 import com.example.nurim.domain.program.entity.Program;
 import com.example.nurim.domain.program.entity.ProgramDate;
 import com.example.nurim.domain.program.repository.ProgramDateRepository;
@@ -43,7 +41,7 @@ public class ReviewService {
     public ReviewSaveResponseDto createReview(Long userId, Long applicationId, ReviewSaveRequestDto request) {
 
         Application findApplication = applicationRepository.findById(applicationId).orElseThrow(() ->
-                new NotFoundException("존재하지 않는 신청입니다."));
+                new CustomException(ErrorCode.APPLICATION_NOT_FOUND));
 
         validateProgramExists(findApplication.getProgramDate().getProgram().getId());
 
@@ -53,12 +51,12 @@ public class ReviewService {
         validateProgramStarted(findApplication, now);
 
         ProgramDate findProgramDate = programDateRepository.findById(findApplication.getProgramDate().getId())
-                .orElseThrow(() -> new NotFoundException("존재하지 않는 일정입니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.PROGRAM_DATE_NOT_FOUND));
 
         validateReviewExists(userId, findProgramDate);
 
         User findUser = userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException("존재하지 않는 유저입니다."));
+                new CustomException(ErrorCode.USER_NOT_FOUND));
 
         Review review = Review.builder()
                 .rating(request.getRating())
@@ -84,7 +82,7 @@ public class ReviewService {
     public Page<ReviewResponseDto> findAllReview(Long programId, int page, int size, String sortBy) {
 
         Program findProgram = programRepository.findProgramByIdAndDeletedAtIsNull(programId).orElseThrow(() ->
-                new NotFoundException("존재하지 않는 프로그램입니다."));
+                new CustomException(ErrorCode.PROGRAM_NOT_FOUND));
 
         Pageable pageable = PageRequest.of(page - 1, size, getSortByCriteria(sortBy));
 
@@ -107,7 +105,7 @@ public class ReviewService {
         validateProgramExists(programId);
 
         Review findReview = reviewRepository.findReviewByIdAndDeletedAtIsNull(reviewId).orElseThrow(() ->
-                new NotFoundException("존재하지 않는 후기입니다."));
+                new CustomException(ErrorCode.REVIEW_NOT_FOUND));
 
         return ReviewResponseDto.builder()
                 .id(findReview.getId())
@@ -126,7 +124,7 @@ public class ReviewService {
         validateProgramExists(programId);
 
         Review findReview = reviewRepository.findReviewByIdAndDeletedAtIsNull(reviewId).orElseThrow(() ->
-                new NotFoundException("존재하지 않는 후기입니다."));
+                new CustomException(ErrorCode.REVIEW_NOT_FOUND));
 
         validateReviewPermission(userId, findReview);
 
@@ -151,7 +149,7 @@ public class ReviewService {
         validateProgramExists(programId);
 
         Review findReview = reviewRepository.findReviewByIdAndDeletedAtIsNull(reviewId).orElseThrow(() ->
-                new NotFoundException("존재하지 않는 후기입니다."));
+                new CustomException(ErrorCode.REVIEW_NOT_FOUND));
 
         validateReviewPermission(userId, findReview);
 
@@ -161,33 +159,32 @@ public class ReviewService {
 
     private void validateReviewExists(Long userId, ProgramDate findProgramDate) {
         if (reviewRepository.existsReviewByUser_IdAndProgramDate_Id(userId, findProgramDate.getId())) {
-            throw new BadRequestException("이미 작성한 후기입니다.");
+            throw new CustomException(ErrorCode.EXIST_REVIEW);
         }
     }
 
-
     private void validateProgramExists(Long programId) {
         if (!programRepository.existsProgramByIdAndDeletedAtIsNull(programId)) {
-            throw new NotFoundException("존재하지 않는 프로그램입니다.");
+            throw new CustomException(ErrorCode.PROGRAM_NOT_FOUND);
         }
     }
 
     private void validateReviewPermission(Long userId, Review findReview) {
         if (!userId.equals(findReview.getUser().getId())) {
-            throw new ForbiddenException("해당 후기에 대한 권한이 없습니다.");
+            throw new CustomException(ErrorCode.NOT_REVIEW_OWNER);
         }
     }
 
     private void validateApplicationCancelled(Application findApplication) {
         if (findApplication.getStatus().equals(ApplicationStatus.CANCLE)) {
-            throw new BadRequestException("취소한 신청입니다.");
+            throw new CustomException(ErrorCode.APPLICATION_CANCELLED);
         }
     }
 
     private void validateProgramStarted(Application findApplication, LocalDateTime now) {
         // 리뷰한 날짜가 이용 시작일보다 전이면 예외
         if (findApplication.getProgramDate().getDate().isAfter(now)) {
-            throw new BadRequestException("아직 프로그램이 시작되지 않았습니다.");
+            throw new CustomException(ErrorCode.PROGRAM_NOT_STARTED);
         }
     }
 
@@ -195,7 +192,7 @@ public class ReviewService {
         return switch (sortBy) {
             case "latest" -> Sort.by(Sort.Direction.DESC, "createdAt");
             case "rating" -> Sort.by(Sort.Direction.DESC, "rating");
-            default -> throw new BadRequestException("지원하지 않는 정렬 방식입니다.");
+            default -> throw new CustomException(ErrorCode.SORT_METHOD_NOT_ALLOWED);
         };
     }
 }
