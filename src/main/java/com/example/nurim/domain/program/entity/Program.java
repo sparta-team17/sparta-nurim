@@ -78,7 +78,7 @@ public class Program extends Timestamped {
         this.registrationEndDate = registrationEndDate;
         this.phone = phone;
     }
-
+    // 상태변경
     public void updateStatus(ProgramStatus status) {
         this.status = status;
     }

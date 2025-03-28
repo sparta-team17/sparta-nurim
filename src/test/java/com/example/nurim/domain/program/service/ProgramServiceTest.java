@@ -13,6 +13,7 @@ import com.example.nurim.domain.program.enums.ProgramStatus;
 import com.example.nurim.domain.program.repository.CategoryRepository;
 import com.example.nurim.domain.program.repository.ProgramDateRepository;
 import com.example.nurim.domain.program.repository.ProgramRepository;
+import com.example.nurim.domain.program.repository.ProgramViewRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -45,6 +46,9 @@ class ProgramServiceTest {
 
   @Mock
   private ProgramDateRepository programDateRepository;
+
+  @Mock
+  private ProgramViewRepository programViewRepository;
 
   @InjectMocks
   private ProgramService programService;
@@ -142,6 +146,7 @@ class ProgramServiceTest {
 
   @Test
   void 프로그램_일정_조회_성공() {
+    Long userId = 123L;
     Long programId = 1L;
     Category category = new Category("코딩");
 
@@ -162,8 +167,12 @@ class ProgramServiceTest {
     );
 
     when(programRepository.findByIdAndDeletedAtIsNull(programId)).thenReturn(Optional.of(program));
+    when(programDateRepository.findAllByProgram(program)).thenReturn(programDateList);
+    when(programRepository.getViewCount(programId)).thenReturn(5L);
 
-    ProgramDatesResponseDto result = programService.findAll(programId);
+    when(programViewRepository.existsByUserIdAndProgramId(userId, programId)).thenReturn(false);
+
+    ProgramDatesResponseDto result = programService.findAll(userId,programId);
 
     assertNotNull(result);
     assertEquals(program.getTitle(), result.getTitle());
@@ -171,12 +180,12 @@ class ProgramServiceTest {
 
   @Test
   void ProgramId를_조회하지_못해서_일정_조회_실패() {
-
+    Long userId = 123L;
     Long programId = 1L;
     when(programRepository.findByIdAndDeletedAtIsNull(programId)).thenReturn(Optional.empty());
 
     CustomException exception = assertThrows(CustomException.class, () -> {
-      programService.findAll(programId);
+      programService.findAll(userId,programId);
     });
     assertEquals("존재하지 않는 프로그램입니다.", exception.getMessage());
   }

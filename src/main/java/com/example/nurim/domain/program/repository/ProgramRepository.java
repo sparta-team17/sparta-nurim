@@ -28,4 +28,8 @@ public interface ProgramRepository extends JpaRepository<Program, Long>, Program
   // 조회수 가져오기
   @Query("SELECT p.viewCount FROM Program p WHERE p.id = :programId AND p.deletedAt IS NULL")
   Long getViewCount(@Param("programId") Long programId);
+
+  // 프로그램 아이디 모두 조회
+  @Query("SELECT p.id FROM Program p WHERE p.deletedAt IS NULL")
+  List<Long> findAllProgramIds();
 }

@@ -1,19 +1,19 @@
 package com.example.nurim.domain.program.controller;
 
+import com.example.nurim.domain.common.dto.AuthUser;
 import com.example.nurim.domain.program.dto.requestDto.ProgramSearchRequestDto;
 import com.example.nurim.domain.program.dto.responseDto.*;
 
 import com.example.nurim.domain.program.service.ProgramService;
-import com.example.nurim.domain.redis.RedisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-
-import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -21,29 +21,38 @@ import java.time.LocalDateTime;
 public class ProgramController {
 
   private final ProgramService programService;
-  private final RedisService redisService;
 
   // 프로그램 전체 목록 조회
   @GetMapping
-  public ResponseEntity<Page<ProgramListRequestDto>> findProgramList(@ModelAttribute ProgramSearchRequestDto requestDto){
+  public ResponseEntity<Page<ProgramListRequestDto>> findProgramList(@ModelAttribute ProgramSearchRequestDto requestDto) {
     Page<ProgramListRequestDto> programList = programService.findProgramList(requestDto);
-    return new ResponseEntity<>(programList,HttpStatus.OK);
+    return new ResponseEntity<>(programList, HttpStatus.OK);
   }
 
-  // 프로그램 모든 데이터 조회
+  // 프로그램 하나의 모든 일정까지 조회
   @GetMapping("/{programId}")
-  public ResponseEntity<ProgramDatesResponseDto> findAll(@PathVariable Long programId) {
-    ProgramDatesResponseDto programDatesResponseDto  = programService.findAll(programId);
-    return new ResponseEntity<>(programDatesResponseDto,HttpStatus.OK);
+  public ResponseEntity<ProgramDatesResponseDto> findAll(
+      @PathVariable Long programId,
+      @AuthenticationPrincipal AuthUser authUser) {
+    ProgramDatesResponseDto programDatesResponseDto = programService.findAll(authUser.getId(), programId);
+    return new ResponseEntity<>(programDatesResponseDto, HttpStatus.OK);
   }
 
-  // 프로그램 모든 데이터 조회(레디스)
+  // 프로그램 하나의 모든 일정까지 조회(레디스)
   @GetMapping("/{programId}/redis")
-  public ResponseEntity<ProgramRedisResponseDto> findAllRedis(@PathVariable Long programId) {
-    ProgramRedisResponseDto programRedisResponseDto  = programService.findAllRedis(programId);
-    return new ResponseEntity<>(programRedisResponseDto,HttpStatus.OK);
+  public ResponseEntity<ProgramRedisResponseDto> findAllRedis(
+      @PathVariable Long programId,
+      @AuthenticationPrincipal AuthUser authUser) {
+    ProgramRedisResponseDto programRedisResponseDto = programService.findAllRedis(authUser.getId(), programId);
+    return new ResponseEntity<>(programRedisResponseDto, HttpStatus.OK);
+
   }
 
+  // 프로그램 랭킹 조회(탑5까지만)
+  @GetMapping("/programs/ranking")
+  public ResponseEntity<List<String>> findProgramRangking() {
+    return ResponseEntity.ok(programService.findProgramRangking());
+  }
 
 }
 

@@ -23,23 +23,5 @@ public class RedisService {
         return (String) redisTemplate.opsForValue().get(key);
     }
 
-    // 조회수 증가
-    public void incrementViewCount(String key) {
-        // Redis에서 조회수 증가
-        redisTemplate.opsForValue().increment(key, 1);
-    }
 
-    // 조회수 가져오기
-    public Long getViewCount(String key) {
-        // Redis에서 값 가져오기
-        Object value = redisTemplate.opsForValue().get(key);
-        // 값이 null이면 0 반환, 아니면 해당 값 반환
-        return value != null ? Long.valueOf(value.toString()) : 0L;
-    }
-
-    // Redis에 조회수 저장 (TTL 설정)
-    public void saveDataWithTTL(String key, String value, long ttlInSeconds) {
-        // Redis에 값 저장, TTL 설정
-        redisTemplate.opsForValue().set(key, value, ttlInSeconds, TimeUnit.SECONDS);
-    }
 }
