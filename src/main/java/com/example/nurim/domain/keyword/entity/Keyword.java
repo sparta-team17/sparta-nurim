@@ -19,11 +19,19 @@ public class Keyword {
     @Column(name = "search_keyword", nullable = false, length = 100)
     private String searchKeyword;
 
-    @Column(name = "searched_at", nullable = false, updatable = false)
+    @Column(nullable = false)
+    private Long searchCount = 0L;
+
+    @Column(name = "searched_at", nullable = false)
     private LocalDateTime searchedAt;
 
-    public Keyword(String searchKeyword, LocalDateTime searchedAt) {
+    public Keyword(String searchKeyword, Long searchCount, LocalDateTime searchedAt) {
         this.searchKeyword = searchKeyword;
+        this.searchCount = searchCount;
         this.searchedAt = searchedAt;
+    }
+
+    public void incrementSearchCount() {
+        this.searchCount++;
     }
 }

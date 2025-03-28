@@ -84,9 +84,11 @@ public class ProgramService {
     Pageable pageable = PageRequest.of(requestDto.getPage() - 1, requestDto.getSize());
 
     if (requestDto.getTitle() != null) {
-      LocalDateTime searchedAt = LocalDateTime.now();
-      Keyword keyword = new Keyword(requestDto.getTitle(), searchedAt);
-      keywordRepository.save(keyword);
+      keywordRepository.findKeywordBySearchKeyword(requestDto.getTitle())
+              .ifPresentOrElse(
+                  this::incrementAndSaveKeyword,
+                  () -> saveNewKeyword(requestDto.getTitle())
+              );
     }
 
     return programRepository.findProgramList(
@@ -239,5 +241,18 @@ public class ProgramService {
       }
     }
     return true;
+  }
+
+  // 검색 횟수를 증가시키고 저장
+  private void incrementAndSaveKeyword(Keyword keyword) {
+    keyword.incrementSearchCount();
+    keywordRepository.save(keyword);
+  }
+
+  // 새로운 검색어 추가
+  private void saveNewKeyword(String keyword) {
+    LocalDateTime searchedAt = LocalDateTime.now();
+    Keyword newKeyword = new Keyword(keyword, 1L, searchedAt);
+    keywordRepository.save(newKeyword);
   }
 }
