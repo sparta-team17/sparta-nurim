@@ -65,7 +65,7 @@ public class ApplicationService {
     }
 
     @Transactional
-    public void deleteApplication(AuthUser authUser, Long programDateId, Long applicationId) {
+    public void cancelApplication(AuthUser authUser, Long programDateId, Long applicationId) {
         // 사용자 조회
         User user = userRepository.findById(authUser.getId())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));

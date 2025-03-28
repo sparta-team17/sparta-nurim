@@ -2,20 +2,20 @@ package com.example.nurim.domain.user.service;
 
 import com.example.nurim.domain.application.dto.response.UserApplicationResponse;
 import com.example.nurim.domain.application.repository.ApplicationRepository;
+import com.example.nurim.domain.common.exception.CustomException;
+import com.example.nurim.domain.common.exception.ErrorCode;
 import com.example.nurim.domain.review.dto.response.UserReviewResponse;
 import com.example.nurim.domain.review.repository.ReviewRepository;
 import com.example.nurim.domain.user.dto.request.FindApplicationRequest;
 import com.example.nurim.domain.user.dto.request.UpdateNameRequest;
 import com.example.nurim.domain.user.dto.request.UpdatePasswordRequest;
 import com.example.nurim.domain.user.entity.User;
-import com.example.nurim.domain.user.exception.UserException;
 import com.example.nurim.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,19 +66,19 @@ public class UserService {
 
     private void validateCurrentPassword(String inputPassword, String currentPassword) {
         if (!passwordEncoder.matches(inputPassword, currentPassword)) {
-            throw new UserException(HttpStatus.BAD_REQUEST, "Current password is incorrect");
+            throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
         }
     }
 
     private void validateNewPassword(String newPassword, String currentPassword) {
         if (newPassword.equals(currentPassword)) {
-            throw new UserException(HttpStatus.BAD_REQUEST, "New password cannot be the same as the current password");
+            throw new CustomException(ErrorCode.NEW_PASSWORD_DUPLICATE);
         }
     }
 
     private void validateNoUnusedApplications(Long userId) {
         if (applicationRepository.existsUnusedApplicationByUserId(userId)) {
-            throw new UserException(HttpStatus.BAD_REQUEST, "Unused application exists, account deletion is not allowed");
+            throw new CustomException(ErrorCode.UNUSED_APPLICATION_EXISTS);
         }
     }
 }
