@@ -9,7 +9,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,8 +31,8 @@ class KeywordServiceTest {
         // Given
         int rankSize = 2;
 
-        Keyword keyword1 = new Keyword("프로그램", 3L, LocalDateTime.now());
-        Keyword keyword2 = new Keyword("만들기", 2L, LocalDateTime.now());
+        Keyword keyword1 = new Keyword("프로그램", 2L);
+        Keyword keyword2 = new Keyword("만들기", 1L);
 
         List<Keyword> keywordList = List.of(keyword1, keyword2);
 

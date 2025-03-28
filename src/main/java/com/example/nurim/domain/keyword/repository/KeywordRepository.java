@@ -13,7 +13,7 @@ public interface KeywordRepository extends JpaRepository<Keyword, Long> {
 
     Optional<Keyword> findKeywordBySearchKeyword(String keyword);
 
-    @Query("SELECT k, k.searchCount FROM Keyword k WHERE k.searchedAt >= :since ORDER BY k.searchCount DESC LIMIT :rankSize")
+    @Query("SELECT k, k.searchCount FROM Keyword k WHERE k.createdAt >= :since ORDER BY k.searchCount DESC LIMIT :rankSize")
     List<Keyword> findByOrderBySearchCountDesc(@Param("since") LocalDateTime since, @Param("rankSize") int rankSize);
 
 }
