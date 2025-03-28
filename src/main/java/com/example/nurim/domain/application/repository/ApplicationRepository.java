@@ -5,6 +5,7 @@ import com.example.nurim.domain.application.entity.Application;
 import com.example.nurim.domain.user.dto.request.FindApplicationRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import org.springframework.data.jpa.repository.Query;
@@ -14,6 +15,7 @@ public interface ApplicationRepository extends JpaRepository<Application, Long>,
 
     boolean existsByProgramDateIdAndUserId(Long programDateId, Long userId);
 
+    @EntityGraph(attributePaths = {"programDate.program"})
     @Query("""
             SELECT CASE WHEN COUNT(a) > 0 THEN TRUE ELSE FALSE END
             FROM Application a
@@ -22,6 +24,7 @@ public interface ApplicationRepository extends JpaRepository<Application, Long>,
     """)
     Boolean existsUnusedApplicationByUserId(@Param("userId") Long userId);
 
+    @EntityGraph(attributePaths = {"programDate.program"})
     Page<UserApplicationResponse> findByUserId(Long userId, FindApplicationRequest request, Pageable pageable);
 
     long countByProgramDateId(Long programDateId);
