@@ -7,6 +7,10 @@ import org.springframework.http.HttpStatus;
 @Getter
 @AllArgsConstructor
 public enum ErrorCode {
+    // AUTH
+    INVALID_JWT(HttpStatus.UNAUTHORIZED,"Invalid JWT"),
+    ACCESS_DENIED(HttpStatus.FORBIDDEN,"Access Denied"),
+
     // USER
     USER_NOT_FOUND(HttpStatus.NOT_FOUND,"존재하지 않는 유저입니다."),
 

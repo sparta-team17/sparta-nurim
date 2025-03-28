@@ -1,12 +1,11 @@
 package com.example.nurim.domain.notice.service;
 
-import com.example.nurim.config.SchedulerConfig;
+import com.example.nurim.domain.notice.scheduler.NoticeScheduler;
 import com.example.nurim.domain.common.exception.CustomException;
 import com.example.nurim.domain.common.exception.ErrorCode;
 import com.example.nurim.domain.notice.dto.response.NoticeResponseDto;
 import com.example.nurim.domain.notice.dto.response.NoticeSearchResponseDto;
 import com.example.nurim.domain.notice.entity.Notice;
-import com.example.nurim.domain.notice.entity.NoticeView;
 import com.example.nurim.domain.notice.repository.NoticeRepository;
 import com.example.nurim.domain.notice.repository.NoticeViewRepository;
 import com.example.nurim.domain.user.entity.User;
@@ -23,7 +22,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.sql.Ref;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -43,7 +41,7 @@ class NoticeServiceTest {
     @Mock
     private UserRepository userRepository;
     @Mock
-    private SchedulerConfig schedulerConfig;
+    private NoticeScheduler schedulerConfig;
     @InjectMocks
     private NoticeService noticeService;
 
@@ -296,7 +294,7 @@ class NoticeServiceTest {
             assertEquals(1, firstResponse.getCount()); // 조회수 1 확인
 
             // 스케줄러 실행 (조회 기록 초기화)
-            schedulerConfig.clearNoticeViews();
+            noticeService.clearNoticeViews();
             // 초기화 후 두번째 조회
             NoticeResponseDto secondResponse = noticeService.findNoticeWithDb(noticeId, userId);
 
