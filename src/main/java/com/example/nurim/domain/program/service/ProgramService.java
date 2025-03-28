@@ -2,17 +2,17 @@ package com.example.nurim.domain.program.service;
 
 import com.example.nurim.domain.common.exception.CustomException;
 import com.example.nurim.domain.common.exception.ErrorCode;
+import com.example.nurim.domain.keyword.entity.Keyword;
+import com.example.nurim.domain.keyword.repository.KeywordRepository;
 import com.example.nurim.domain.program.dto.requestDto.ProgramRequestDto;
 import com.example.nurim.domain.program.dto.requestDto.ProgramSearchRequestDto;
 import com.example.nurim.domain.program.dto.requestDto.ProgramUpdateRequestDto;
 import com.example.nurim.domain.program.dto.responseDto.*;
 import com.example.nurim.domain.program.entity.Category;
 import com.example.nurim.domain.program.entity.Program;
-
 import com.example.nurim.domain.program.entity.ProgramDate;
 import com.example.nurim.domain.program.enums.ProgramDateStatus;
 import com.example.nurim.domain.program.enums.ProgramStatus;
-import com.example.nurim.domain.program.exception.ProgramException;
 import com.example.nurim.domain.program.repository.CategoryRepository;
 import com.example.nurim.domain.program.repository.ProgramDateRepository;
 import com.example.nurim.domain.program.repository.ProgramRepository;
@@ -20,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +33,7 @@ public class ProgramService {
   private final ProgramRepository programRepository;
   private final CategoryRepository categoryRepository;
   private final ProgramDateRepository programDateRepository;
+  private final KeywordRepository keywordRepository;
 
   // 프로그램 등록
   @Transactional
@@ -77,9 +77,17 @@ public class ProgramService {
         program.getCreatedAt()
     );
   }
+
+  @Transactional
   // 프로그램 목록 조회
   public Page<ProgramListRequestDto> findProgramList(ProgramSearchRequestDto requestDto) {
     Pageable pageable = PageRequest.of(requestDto.getPage() - 1, requestDto.getSize());
+
+    if (requestDto.getTitle() != null) {
+      LocalDateTime searchedAt = LocalDateTime.now();
+      Keyword keyword = new Keyword(requestDto.getTitle(), searchedAt);
+      keywordRepository.save(keyword);
+    }
 
     return programRepository.findProgramList(
         requestDto.getTitle(),
