@@ -46,20 +46,18 @@ public class UserController {
         userService.deleteUser(authUser.getId());
     }
 
-    @HasUserRole
     @GetMapping("/reviews")
     public Page<UserReviewResponse> findReviews(
-            @AuthenticationPrincipal AuthUser authUser,
+            @HasUserRole AuthUser authUser,
             @RequestParam(defaultValue = FIRST_PAGE) @Min(1) Integer page,
             @RequestParam(defaultValue = DEFAULT_SIZE) @Min(1) Integer size
     ) {
         return userService.findReviews(authUser.getId(), page, size);
     }
 
-    @HasUserRole
     @GetMapping("/applications")
     public Page<UserApplicationResponse> findApplications(
-            @AuthenticationPrincipal AuthUser authUser,
+            @HasUserRole AuthUser authUser,
             @RequestParam(defaultValue = FIRST_PAGE) @Min(1) Integer page,
             @RequestParam(defaultValue = DEFAULT_SIZE) @Min(1) Integer size,
             @ModelAttribute FindApplicationRequest request

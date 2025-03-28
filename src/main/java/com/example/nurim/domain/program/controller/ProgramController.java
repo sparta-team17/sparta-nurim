@@ -2,12 +2,12 @@ package com.example.nurim.domain.program.controller;
 
 import com.example.nurim.domain.common.dto.AuthUser;
 import com.example.nurim.domain.program.dto.requestDto.ProgramSearchRequestDto;
-import com.example.nurim.domain.program.dto.responseDto.*;
-
+import com.example.nurim.domain.program.dto.responseDto.ProgramDatesResponseDto;
+import com.example.nurim.domain.program.dto.responseDto.ProgramListRequestDto;
+import com.example.nurim.domain.program.dto.responseDto.ProgramRedisResponseDto;
 import com.example.nurim.domain.program.service.ProgramService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,16 +17,15 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/programs")
 public class ProgramController {
 
   private final ProgramService programService;
 
   // 프로그램 전체 목록 조회
-  @GetMapping
-  public ResponseEntity<Page<ProgramListRequestDto>> findProgramList(@ModelAttribute ProgramSearchRequestDto requestDto) {
+  @GetMapping({"/v1/programs/search"})
+  public ResponseEntity<Page<ProgramListRequestDto>> findProgramList(@ModelAttribute ProgramSearchRequestDto requestDto){
     Page<ProgramListRequestDto> programList = programService.findProgramList(requestDto);
-    return new ResponseEntity<>(programList, HttpStatus.OK);
+    return new ResponseEntity<>(programList,HttpStatus.OK);
   }
 
   // 프로그램 하나의 모든 일정까지 조회

@@ -1,5 +1,6 @@
 package com.example.nurim.domain.auth.controller;
 
+import com.example.nurim.domain.auth.dto.request.RefreshRequest;
 import com.example.nurim.domain.auth.dto.request.SigninRequest;
 import com.example.nurim.domain.auth.dto.request.SignupRequest;
 import com.example.nurim.domain.auth.dto.response.AuthResponse;
@@ -19,12 +20,17 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signup")
-    public AuthResponse signup(@RequestBody @Valid SignupRequest request) {
-        return authService.signup(request);
+    public void signup(@RequestBody @Valid SignupRequest request) {
+        authService.signup(request);
     }
 
     @PostMapping("/signin")
     public AuthResponse signin(@RequestBody @Valid SigninRequest request) {
         return authService.signin(request);
+    }
+
+    @PostMapping("/refresh")
+    public AuthResponse refresh(@RequestBody @Valid RefreshRequest request) {
+        return authService.refresh(request);
     }
 }

@@ -2,13 +2,14 @@ package com.example.nurim.domain.program.service;
 
 import com.example.nurim.domain.common.exception.CustomException;
 import com.example.nurim.domain.common.exception.ErrorCode;
+import com.example.nurim.domain.keyword.entity.Keyword;
+import com.example.nurim.domain.keyword.repository.KeywordRepository;
 import com.example.nurim.domain.program.dto.requestDto.ProgramRequestDto;
 import com.example.nurim.domain.program.dto.requestDto.ProgramSearchRequestDto;
 import com.example.nurim.domain.program.dto.requestDto.ProgramUpdateRequestDto;
 import com.example.nurim.domain.program.dto.responseDto.*;
 import com.example.nurim.domain.program.entity.Category;
 import com.example.nurim.domain.program.entity.Program;
-
 import com.example.nurim.domain.program.entity.ProgramDate;
 import com.example.nurim.domain.program.entity.ProgramView;
 import com.example.nurim.domain.program.enums.ProgramDateStatus;
@@ -41,6 +42,7 @@ public class ProgramService {
   private final RedisTemplate<String, String> redisTemplate;
   private final ProgramViewRepository programViewRepository;
 
+  private final KeywordRepository keywordRepository;
 
   // 프로그램 등록
   @Transactional
@@ -85,9 +87,19 @@ public class ProgramService {
     );
   }
 
+  @Transactional
+
   // 프로그램 목록 조회
   public Page<ProgramListRequestDto> findProgramList(ProgramSearchRequestDto requestDto) {
     Pageable pageable = PageRequest.of(requestDto.getPage() - 1, requestDto.getSize());
+
+    if (requestDto.getTitle() != null) {
+      keywordRepository.findKeywordBySearchKeyword(requestDto.getTitle())
+              .ifPresentOrElse(
+                  this::incrementAndSaveKeyword,
+                  () -> saveNewKeyword(requestDto.getTitle())
+              );
+    }
 
     return programRepository.findProgramList(
         requestDto.getTitle(),
@@ -113,6 +125,7 @@ public class ProgramService {
     Long viewCount = programRepository.getViewCount(programId);
 
     List<ProgramDate> programDates = programDateRepository.findAllByProgram(findProgram);
+
     List<ProgramDateInfoDto> programDateInfoDtos = new ArrayList<>();
 
     for (ProgramDate date : programDates) {
@@ -341,6 +354,19 @@ public class ProgramService {
 
     return topPrograms != null ? new ArrayList<>(topPrograms) : new ArrayList<>();
 
+  }
+
+  // 검색 횟수를 증가시키고 저장
+  private void incrementAndSaveKeyword(Keyword keyword) {
+    keyword.incrementSearchCount();
+    keywordRepository.save(keyword);
+  }
+
+  // 새로운 검색어 추가
+  private void saveNewKeyword(String keyword) {
+    LocalDateTime searchedAt = LocalDateTime.now();
+    Keyword newKeyword = new Keyword(keyword, 1L, searchedAt);
+    keywordRepository.save(newKeyword);
   }
 }
 
