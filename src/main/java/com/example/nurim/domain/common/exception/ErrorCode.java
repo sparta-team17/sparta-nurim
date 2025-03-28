@@ -19,7 +19,7 @@ public enum ErrorCode {
 
     PROGRAM_FULL(HttpStatus.BAD_REQUEST, "해당 프로그램의 신청이 마감되었습니다."),
     PROGRAM_DATE_CLOSED(HttpStatus.BAD_REQUEST, "신청기간이 종료되었습니다."),
-
+    PROGRAM_DATE_NOT_OPENED(HttpStatus.BAD_REQUEST, "신청기간이 시작되지 않았습니다."),
 
     // PROGRAM_DATE
     PROGRAMDATE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 일정입니다."),

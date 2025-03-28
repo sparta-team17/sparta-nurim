@@ -22,7 +22,7 @@ public class ApplicationController {
             @AuthenticationPrincipal AuthUser authUser,
             @PathVariable Long programDateId
     ) {
-        return ResponseEntity.ok(applicationService.createApplication(authUser, programDateId));
+        return ResponseEntity.ok(applicationService.createApplication(authUser.getId(), programDateId));
     }
 
     // 신청취소
