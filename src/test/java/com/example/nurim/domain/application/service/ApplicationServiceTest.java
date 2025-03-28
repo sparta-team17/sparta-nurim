@@ -303,8 +303,10 @@ class ApplicationServiceTest {
             // 기본적으로 등록 마감일이 미래이므로 취소 가능
             applicationService.cancelApplication(authUser, programDateId, applicationId);
 
-            verify(applicationRepository, times(1)).save(any(Application.class));
-            verify(programDateRepository, times(1)).save(any(ProgramDate.class));
+            assertEquals(ApplicationStatus.CANCEL, application.getStatus(), "상태가 CANCEL으로 변경되어야 합니다.");
+            verify(applicationRepository, times(1)).save(application);
+            verify(programDateRepository, times(1)).save(programDate);
+
         }
     }
 }
