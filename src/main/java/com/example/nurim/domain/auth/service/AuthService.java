@@ -6,11 +6,11 @@ import com.example.nurim.domain.auth.dto.request.SigninRequest;
 import com.example.nurim.domain.auth.dto.request.SignupRequest;
 import com.example.nurim.domain.auth.dto.response.AuthResponse;
 import com.example.nurim.domain.auth.entity.UserInfo;
-import com.example.nurim.domain.auth.exception.AuthException;
+import com.example.nurim.domain.common.exception.CustomException;
+import com.example.nurim.domain.common.exception.ErrorCode;
 import com.example.nurim.domain.user.entity.User;
 import com.example.nurim.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +38,7 @@ public class AuthService {
     @Transactional
     public AuthResponse signin(SigninRequest request) {
         User user = userRepository.findByEmailAndDeletedAtIsNull(request.getEmail())
-                .orElseThrow(() -> new AuthException(HttpStatus.BAD_REQUEST, "No account found with this email"));
+                .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND));
 
         validatePassword(request.getPassword(), user.getPassword());
 
@@ -56,19 +56,19 @@ public class AuthService {
 
     private void validateEmailInUse(String email) {
         if (userRepository.existsByEmailAndDeletedAtIsNull(email)) {
-            throw new AuthException(HttpStatus.BAD_REQUEST, "This email is already in use");
+            throw new CustomException(ErrorCode.EMAIL_ALREADY_IN_USE);
         }
     }
 
     private void validateDeletedAccount(String email) {
         if (userRepository.existsByEmailAndDeletedAtIsNotNull(email)) {
-            throw new AuthException(HttpStatus.BAD_REQUEST, "This account has been deleted");
+            throw new CustomException(ErrorCode.EMAIL_ALREADY_DELETED);
         }
     }
 
     private void validatePassword(String inputPassword, String storedPassword) {
         if (!passwordEncoder.matches(inputPassword, storedPassword)) {
-            throw new AuthException(HttpStatus.BAD_REQUEST, "Invalid password");
+            throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
         }
     }
 }

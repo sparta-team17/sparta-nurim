@@ -9,9 +9,15 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
     // USER
     USER_NOT_FOUND(HttpStatus.NOT_FOUND,"존재하지 않는 유저입니다."),
-    PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "현재 비밀번호가 일치하지 않습니다."),
+    PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
     NEW_PASSWORD_DUPLICATE(HttpStatus.BAD_REQUEST, "새 비밀번호는 현재 비밀번호와 달라야 합니다."),
     UNUSED_APPLICATION_EXISTS(HttpStatus.BAD_REQUEST, "이용하지 않은 신청 정보가 있어 계정을 삭제할 수 없습니다."),
+
+    // AUTH
+    EMAIL_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 이메일입니다."),
+    EMAIL_ALREADY_IN_USE(HttpStatus.BAD_REQUEST, "이미 사용 중인 이메일입니다."),
+    EMAIL_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "이미 탈퇴한 계정의 이메일입니다."),
+    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다."),
 
     // NOTICE
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 공지사항입니다"),

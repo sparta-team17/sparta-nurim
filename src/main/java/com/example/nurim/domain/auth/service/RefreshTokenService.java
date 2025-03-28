@@ -2,11 +2,11 @@ package com.example.nurim.domain.auth.service;
 
 import com.example.nurim.domain.auth.entity.RefreshToken;
 import com.example.nurim.domain.auth.entity.UserInfo;
-import com.example.nurim.domain.auth.exception.AuthException;
 import com.example.nurim.domain.auth.repository.RefreshTokenRepository;
+import com.example.nurim.domain.common.exception.CustomException;
+import com.example.nurim.domain.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,7 +37,7 @@ public class RefreshTokenService {
     @Transactional(readOnly = true)
     public UserInfo extractUserInfo(String token) {
         RefreshToken refreshToken = refreshTokenRepository.findById(token)
-                .orElseThrow(() -> new AuthException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REFRESH_TOKEN));
         return refreshToken.getUserInfo();
     }
 }
