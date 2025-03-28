@@ -18,7 +18,7 @@ public class JwtUtil {
 
     @Value("${jwt.secret.key}")
     private String secretKey;
-    @Value("${jwt.expiration}")
+    @Value("${jwt.access.expiration}")
     private Long expiration;
     private Key key;
 
@@ -28,7 +28,7 @@ public class JwtUtil {
         key = Keys.hmacShaKeyFor(bytes);
     }
 
-    public String createToken(Long userId, String email, String name, UserRole role) {
+    public String createAccessToken(Long userId, String email, String name, UserRole role) {
         Date date = new Date();
 
         return Jwts.builder()

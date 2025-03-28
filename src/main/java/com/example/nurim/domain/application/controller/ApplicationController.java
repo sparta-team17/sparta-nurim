@@ -27,11 +27,11 @@ public class ApplicationController {
 
     // 신청취소
     @DeleteMapping
-    public void deleteApplication(
+    public void cancelApplication(
             @AuthenticationPrincipal AuthUser authUser,
             @PathVariable Long programDateId,
             @RequestParam Long applicationId
     ) {
-        applicationService.deleteApplication(authUser, programDateId, applicationId);
+        applicationService.cancelApplication(authUser, programDateId, applicationId);
     }
 }

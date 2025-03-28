@@ -3,13 +3,14 @@ package com.example.nurim.domain.user.service;
 import com.example.nurim.domain.application.dto.response.UserApplicationResponse;
 import com.example.nurim.domain.application.enums.ApplicationStatus;
 import com.example.nurim.domain.application.repository.ApplicationRepository;
+import com.example.nurim.domain.common.exception.CustomException;
+import com.example.nurim.domain.common.exception.ErrorCode;
 import com.example.nurim.domain.review.dto.response.UserReviewResponse;
 import com.example.nurim.domain.review.repository.ReviewRepository;
 import com.example.nurim.domain.user.dto.request.FindApplicationRequest;
 import com.example.nurim.domain.user.dto.request.UpdateNameRequest;
 import com.example.nurim.domain.user.dto.request.UpdatePasswordRequest;
 import com.example.nurim.domain.user.entity.User;
-import com.example.nurim.domain.user.exception.UserException;
 import com.example.nurim.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,7 +18,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
@@ -54,11 +54,10 @@ class UserServiceTest {
         @Order(1)
         void 이름_수정_사용자_없음_실패() {
             given(userRepository.findActiveByIdOrElseThrow(anyLong()))
-                    .willThrow(new UserException(HttpStatus.NOT_FOUND, "User not found"));
+                    .willThrow(new CustomException(ErrorCode.USER_NOT_FOUND));
 
-            UserException thrown = assertThrows(UserException.class, () -> userService.updateName(1L, request));
-            assertEquals(HttpStatus.NOT_FOUND, thrown.getStatus());
-            assertEquals("User not found", thrown.getMessage());
+            CustomException thrown = assertThrows(CustomException.class, () -> userService.updateName(1L, request));
+            assertEquals(ErrorCode.USER_NOT_FOUND, thrown.getErrorCode());
         }
 
         @Test
@@ -87,11 +86,10 @@ class UserServiceTest {
             UpdatePasswordRequest request = new UpdatePasswordRequest("oldPassword", "newPassword");
 
             given(userRepository.findActiveByIdOrElseThrow(anyLong()))
-                    .willThrow(new UserException(HttpStatus.NOT_FOUND, "User not found"));
+                    .willThrow(new CustomException(ErrorCode.USER_NOT_FOUND));
 
-            UserException thrown = assertThrows(UserException.class, () -> userService.updatePassword(1L, request));
-            assertEquals(HttpStatus.NOT_FOUND, thrown.getStatus());
-            assertEquals("User not found", thrown.getMessage());
+            CustomException thrown = assertThrows(CustomException.class, () -> userService.updatePassword(1L, request));
+            assertEquals(ErrorCode.USER_NOT_FOUND, thrown.getErrorCode());
         }
 
         @Test
@@ -102,9 +100,8 @@ class UserServiceTest {
             given(userRepository.findActiveByIdOrElseThrow(anyLong())).willReturn(user);
             given(passwordEncoder.matches(anyString(), anyString())).willReturn(false);
 
-            UserException thrown = assertThrows(UserException.class, () -> userService.updatePassword(1L, request));
-            assertEquals(HttpStatus.BAD_REQUEST, thrown.getStatus());
-            assertEquals("Current password is incorrect", thrown.getMessage());
+            CustomException thrown = assertThrows(CustomException.class, () -> userService.updatePassword(1L, request));
+            assertEquals(ErrorCode.PASSWORD_MISMATCH, thrown.getErrorCode());
         }
 
         @Test
@@ -115,9 +112,8 @@ class UserServiceTest {
             given(userRepository.findActiveByIdOrElseThrow(anyLong())).willReturn(user);
             given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
 
-            UserException thrown = assertThrows(UserException.class, () -> userService.updatePassword(1L, request));
-            assertEquals(HttpStatus.BAD_REQUEST, thrown.getStatus());
-            assertEquals("New password cannot be the same as the current password", thrown.getMessage());
+            CustomException thrown = assertThrows(CustomException.class, () -> userService.updatePassword(1L, request));
+            assertEquals(ErrorCode.NEW_PASSWORD_DUPLICATE, thrown.getErrorCode());
         }
 
         @Test
@@ -147,11 +143,10 @@ class UserServiceTest {
         @Order(1)
         void 회원탈퇴_사용자_없음_실패() {
             given(userRepository.findActiveByIdOrElseThrow(anyLong()))
-                    .willThrow(new UserException(HttpStatus.NOT_FOUND, "User not found"));
+                    .willThrow(new CustomException(ErrorCode.USER_NOT_FOUND));
 
-            UserException thrown = assertThrows(UserException.class, () -> userService.deleteUser(1L));
-            assertEquals(HttpStatus.NOT_FOUND, thrown.getStatus());
-            assertEquals("User not found", thrown.getMessage());
+            CustomException thrown = assertThrows(CustomException.class, () -> userService.deleteUser(1L));
+            assertEquals(ErrorCode.USER_NOT_FOUND, thrown.getErrorCode());
         }
 
         @Test
@@ -160,9 +155,8 @@ class UserServiceTest {
             given(userRepository.findActiveByIdOrElseThrow(anyLong())).willReturn(user);
             given(applicationRepository.existsUnusedApplicationByUserId(anyLong())).willReturn(true);
 
-            UserException thrown = assertThrows(UserException.class, () -> userService.deleteUser(1L));
-            assertEquals(HttpStatus.BAD_REQUEST, thrown.getStatus());
-            assertEquals("Unused application exists, account deletion is not allowed", thrown.getMessage());
+            CustomException thrown = assertThrows(CustomException.class, () -> userService.deleteUser(1L));
+            assertEquals(ErrorCode.UNUSED_APPLICATION_EXISTS, thrown.getErrorCode());
         }
 
         @Test
