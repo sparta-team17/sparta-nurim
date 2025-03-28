@@ -81,8 +81,6 @@ public class NoticeService {
         return NoticeResponseDto.fromEntity(notice);
     }
 
-
-
     public Page<NoticeSearchResponseDto> findNotices(int page, int size, String keyword) {
         Pageable pageable = PageRequest.of(page - 1, size);
         return noticeRepository.findNotices(keyword, pageable);
@@ -96,6 +94,15 @@ public class NoticeService {
         log.info("count = {}",getViewCount(noticeId).intValue());
         return NoticeResponseDto.fromEntity(notice);
     }
+
+
+    public void clearNoticeViews(){
+        noticeViewRepository.deleteAllViews();
+    }
+    public void resetAllNoticeCount(){
+        noticeRepository.resetAllNoticeCount();
+    }
+
     public boolean isViewed(Long noticeId, Long userId) {
         String key = "user:" + userId + ":notice:" + noticeId;
         return redisTemplate.opsForValue().get(key) != null;
@@ -118,4 +125,12 @@ public class NoticeService {
         Double viewCount = redisTemplate.opsForZSet().score(key, value);
         return (viewCount != null) ? viewCount : 0.0;
     }
+    public void clearViewCountAndViews(){
+        redisTemplate.delete("viewRank");
+        Set<String> keys = redisTemplate.keys("user:*:notice:*");
+        if (!keys.isEmpty()) {
+            redisTemplate.delete(keys);
+        }
+    }
+
 }
