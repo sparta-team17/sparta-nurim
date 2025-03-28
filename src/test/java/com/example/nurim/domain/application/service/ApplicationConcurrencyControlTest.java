@@ -10,10 +10,12 @@ import com.example.nurim.domain.program.repository.ProgramDateRepository;
 import com.example.nurim.domain.program.repository.ProgramRepository;
 import com.example.nurim.domain.user.entity.User;
 import com.example.nurim.domain.user.repository.UserRepository;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,7 +27,6 @@ import java.util.stream.IntStream;
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ApplicationConcurrencyControlTest {
 
     @Autowired
@@ -54,57 +55,27 @@ class ApplicationConcurrencyControlTest {
         program = new Program(category, "title", "location", 100L, "detail", ProgramStatus.ACCEPTING, now.minusDays(3), now.plusDays(3), "phone");
         programRepository.save(program);
 
+        ProgramDate programDate = new ProgramDate(program, LocalDateTime.now().plusMonths(1));
+        programDateRepository.save(programDate);
+        programDateId = programDate.getId();
+
         users = IntStream.rangeClosed(1, 1000)
                 .mapToObj(i -> new User("email" + i, "password", "name" + i))
                 .toList();
         userRepository.saveAll(users);
     }
 
-    @BeforeEach
-    void beforeEach() {
-        ProgramDate programDate = new ProgramDate(program, LocalDateTime.now().plusMonths(1));
-        programDateRepository.save(programDate);
-        programDateId = programDate.getId();
-    }
-
-    @AfterEach
-    void afterEach() {
-        applicationRepository.deleteAll();
-        programDateRepository.deleteAll();
-    }
-
     @AfterAll
     void tearDown() {
+        applicationRepository.deleteAll();
+        programDateRepository.deleteAll();
         userRepository.deleteAll();
         programRepository.deleteAll();
         categoryRepository.deleteAll();
     }
 
     @Test
-    @Order(1)
-    void 프로그램_순차적_신청_성공() {
-        Long quota = program.getQuota();
-
-        AtomicInteger successCount = new AtomicInteger();
-        AtomicInteger failCount = new AtomicInteger();
-
-        for (User user : users) {
-            try {
-                applicationService.createApplication(user.getId(), programDateId);
-                successCount.incrementAndGet();
-            } catch (Exception e) {
-                failCount.incrementAndGet();
-            }
-        }
-
-        System.out.println("quota: " + quota);
-        System.out.println("successCount: " + successCount.get());
-        System.out.println("failCount: " + failCount.get());
-    }
-
-    @Test
-    @Order(2)
-    void 프로그램_동시_신청_동시성_문제_발생() throws InterruptedException {
+    void 프로그램_동시_신청_낙관적_락_사용() throws InterruptedException {
         Long quota = program.getQuota();
 
         AtomicInteger successCount = new AtomicInteger();
