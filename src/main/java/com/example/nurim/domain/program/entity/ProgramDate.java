@@ -26,9 +26,6 @@ public class ProgramDate extends Timestamped {
 
     private LocalDateTime date;
 
-    @Version
-    private Integer version;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ProgramDateStatus status;

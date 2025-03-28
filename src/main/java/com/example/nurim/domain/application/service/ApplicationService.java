@@ -33,7 +33,7 @@ public class ApplicationService {
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 프로그램 일정 조회
-        ProgramDate programDate = programDateRepository.findById(programDateId)
+        ProgramDate programDate = programDateRepository.findByIdWithPessimisticLock(programDateId)
                 .orElseThrow(()-> new CustomException(ErrorCode.PROGRAM_DATE_NOT_FOUND));
 
         // 프로그램 신청 가능 여부 확인 (접수 종료일 기준)

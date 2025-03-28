@@ -75,7 +75,7 @@ class ApplicationConcurrencyControlTest {
     }
 
     @Test
-    void 프로그램_동시_신청_낙관적_락_사용() throws InterruptedException {
+    void 프로그램_동시_신청_비관적_락_사용() throws InterruptedException {
         Long quota = program.getQuota();
 
         AtomicInteger successCount = new AtomicInteger();
