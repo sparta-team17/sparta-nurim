@@ -1,9 +1,11 @@
 package com.example.nurim.domain.auth.service;
 
 import com.example.nurim.config.JwtUtil;
+import com.example.nurim.domain.auth.dto.request.RefreshRequest;
 import com.example.nurim.domain.auth.dto.request.SigninRequest;
 import com.example.nurim.domain.auth.dto.request.SignupRequest;
 import com.example.nurim.domain.auth.dto.response.AuthResponse;
+import com.example.nurim.domain.auth.entity.UserInfo;
 import com.example.nurim.domain.common.exception.CustomException;
 import com.example.nurim.domain.common.exception.ErrorCode;
 import com.example.nurim.domain.user.entity.User;
@@ -34,6 +36,8 @@ class AuthServiceTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private JwtUtil jwtUtil;
+    @Mock
+    private RefreshTokenService refreshTokenService;
     @InjectMocks
     private AuthService authService;
 
@@ -112,18 +116,46 @@ class AuthServiceTest {
         @Order(3)
         void 로그인_성공() {
             String encodedPassword = "encodedPassword";
-            String token = "testToken";
+            String accessToken = "accessToken";
+            String refreshToken = "refreshToken";
 
             User user = new User(request.getEmail(), encodedPassword, "name");
 
             given(userRepository.findByEmailAndDeletedAtIsNull(anyString())).willReturn(Optional.of(user));
             given(passwordEncoder.matches(anyString(), anyString())).willReturn(true);
-            given(jwtUtil.createAccessToken(any(), anyString(), anyString(), any(UserRole.class))).willReturn(token);
+            given(jwtUtil.createAccessToken(any(), anyString(), anyString(), any(UserRole.class))).willReturn(accessToken);
+            given(refreshTokenService.createRefreshToken(any(UserInfo.class))).willReturn(refreshToken);
 
             AuthResponse response = authService.signin(request);
 
             assertNotNull(response);
-            assertEquals(token, response.getAccessToken());
+            assertEquals(accessToken, response.getAccessToken());
+            assertEquals(refreshToken, response.getRefreshToken());
         }
+    }
+
+    @Nested
+    @Order(3)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    class RefreshTests {
+
+        private final RefreshRequest request = new RefreshRequest("refreshToken");
+
+        @Test
+        @Order(1)
+        void access_token_발급_성공() {
+            String accessToken = "accessToken";
+            UserInfo userInfo = UserInfo.of(new User("temp@gmail.com", "password", "name"));
+
+            given(refreshTokenService.extractUserInfo(anyString())).willReturn(userInfo);
+            given(jwtUtil.createAccessToken(any(), anyString(), anyString(), any(UserRole.class))).willReturn(accessToken);
+
+            AuthResponse response = authService.refresh(request);
+
+            assertNotNull(response);
+            assertEquals(accessToken, response.getAccessToken());
+            assertEquals(request.getRefreshToken(), response.getRefreshToken());
+        }
+
     }
 }
