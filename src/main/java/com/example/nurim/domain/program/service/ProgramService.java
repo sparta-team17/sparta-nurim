@@ -335,12 +335,12 @@ public class ProgramService {
 
   // 자정지나면 조회수 초기화
   public void resetProgramViewCounts() {
-    String today = LocalDate.now().minusDays(1).toString();
+    String yesterday = LocalDate.now().minusDays(1).toString();
 
     List<Long> allProgramIds = programRepository.findAllProgramIds();
 
     for (Long programId : allProgramIds) {
-      String key = "program:" + programId + ":views:" + today;
+      String key = "program:" + programId + ":views:" + yesterday;
       redisTemplate.delete(key);
     }
   }
