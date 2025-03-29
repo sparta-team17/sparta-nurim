@@ -1,12 +1,15 @@
 package com.example.nurim.config;
 
-import com.example.nurim.domain.common.exception.ErrorResponseUtil;
+//import com.example.nurim.domain.common.exception.ErrorResponseUtil;
+import com.example.nurim.domain.common.exception.CustomExceptionResponse;
+import com.example.nurim.domain.common.exception.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
@@ -27,7 +30,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
-        Map<String, Object> errorResponse = ErrorResponseUtil.getErrorResponse(HttpStatus.UNAUTHORIZED, "Invalid JWT");
+        CustomExceptionResponse errorResponse = CustomExceptionResponse.toResponse(ErrorCode.INVALID_JWT);
         objectMapper.writeValue(response.getWriter(), errorResponse);
     }
 }
