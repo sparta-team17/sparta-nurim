@@ -364,8 +364,7 @@ public class ProgramService {
 
   // 새로운 검색어 추가
   private void saveNewKeyword(String keyword) {
-    LocalDateTime searchedAt = LocalDateTime.now();
-    Keyword newKeyword = new Keyword(keyword, 1L, searchedAt);
+    Keyword newKeyword = new Keyword(keyword, 1L);
     keywordRepository.save(newKeyword);
   }
 }
