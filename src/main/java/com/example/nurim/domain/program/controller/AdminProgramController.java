@@ -30,18 +30,16 @@ public class AdminProgramController {
   @PutMapping("/programs/{programId}")
   public ResponseEntity<ProgramUpdateResponseDto> updateProgram(
       @PathVariable Long programId,
-      @RequestBody ProgramUpdateRequestDto requestDto
-  ) {
+      @RequestBody ProgramUpdateRequestDto requestDto) {
     ProgramUpdateResponseDto programUpdateResponseDto = programService.updateProgram(programId, requestDto);
     return new ResponseEntity<>(programUpdateResponseDto, HttpStatus.OK);
   }
 
   //프로그램 일정 수정
-  @PutMapping("/programs/{programId}/dates/")
+  @PutMapping("/programs/{programId}/dates")
   public ResponseEntity<ProgramDateUpdateResponseDto> updateProgramDates(
       @PathVariable Long programId,
       @RequestBody ProgramDateUpdateRequestDto request) {
-
     ProgramDateUpdateResponseDto programDateUpdateResponseDto = programService.updateProgramDates(programId, request.getUsageDates());
     return new ResponseEntity<>(programDateUpdateResponseDto, HttpStatus.OK);
   }
@@ -55,7 +53,7 @@ public class AdminProgramController {
 
   // 프로그램 일정 삭제
   @DeleteMapping("/programs/dates/{programDateId}")
-  public ResponseEntity<Void> deleteProgramDate(@PathVariable Long programDateId){
+  public ResponseEntity<Void> deleteProgramDate(@PathVariable Long programDateId) {
     programService.deleteProgramDate(programDateId);
     return new ResponseEntity<>(HttpStatus.OK);
   }

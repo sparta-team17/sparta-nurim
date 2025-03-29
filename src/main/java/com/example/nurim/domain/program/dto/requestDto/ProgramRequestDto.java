@@ -19,7 +19,7 @@ public class ProgramRequestDto {
   private final LocalDateTime registrationEndDate;
   private final String phone;
 
-  public ProgramRequestDto(String title, String location, Long categoryId, ProgramStatus status, Long quota, String detail,  List<LocalDateTime> usageDates, LocalDateTime registrationStartDate,LocalDateTime registrationEndDate, String phone){
+  public ProgramRequestDto(String title, String location, Long categoryId, ProgramStatus status, Long quota, String detail, List<LocalDateTime> usageDates, LocalDateTime registrationStartDate, LocalDateTime registrationEndDate, String phone) {
 
     this.title = title;
     this.location = location;
