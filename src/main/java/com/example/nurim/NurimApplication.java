@@ -2,8 +2,7 @@ package com.example.nurim;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -13,6 +12,7 @@ import static org.springframework.data.web.config.EnableSpringDataWebSupport.Pag
 @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)
 //@EnableRedisRepositories
 @EnableScheduling
+@EnableCaching
 public class NurimApplication {
 
     public static void main(String[] args) {

@@ -1,6 +1,7 @@
 package com.example.nurim.domain.keyword.service;
 
 import com.example.nurim.domain.keyword.dto.request.KeywordResponseDto;
+import com.example.nurim.domain.keyword.entity.Keyword;
 import com.example.nurim.domain.keyword.repository.KeywordRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,30 @@ public class KeywordService {
     }
 
     @Transactional
+    public void createKeyword(String keyword) {
+        if (keyword == null || keyword.isBlank()) return;
+
+        keywordRepository.findKeywordBySearchKeyword(keyword)
+                .ifPresentOrElse(
+                        this::incrementAndSaveKeyword,
+                        () -> saveNewKeyword(keyword)
+                );
+    }
+
+    @Transactional
     public void deleteOldKeywords() {
         keywordRepository.deleteAll();
+    }
+
+    // 검색 횟수를 증가시키고 저장
+    private void incrementAndSaveKeyword(Keyword keyword) {
+        keyword.incrementSearchCount();
+        keywordRepository.save(keyword);
+    }
+
+    // 새로운 검색어 추가
+    private void saveNewKeyword(String keyword) {
+        Keyword newKeyword = new Keyword(keyword, 1L);
+        keywordRepository.save(newKeyword);
     }
 }
