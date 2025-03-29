@@ -335,7 +335,7 @@ public class ProgramService {
 
   // 자정지나면 조회수 초기화
   public void resetProgramViewCounts() {
-    String today = LocalDate.now().toString();
+    String today = LocalDate.now().minusDays(1).toString();
 
     List<Long> allProgramIds = programRepository.findAllProgramIds();
 
