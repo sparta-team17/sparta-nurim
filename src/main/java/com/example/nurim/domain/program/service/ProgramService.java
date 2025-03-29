@@ -112,6 +112,7 @@ public class ProgramService {
   // 프로그램 상세 조회(프로그램에 포함된 일정까지 조회)
   @Transactional
   public ProgramDatesResponseDto findAll(Long userId, Long programId) {
+
     Program findProgram = programRepository.findByIdAndDeletedAtIsNull(programId)
         .orElseThrow(() -> new CustomException(ErrorCode.PROGRAM_NOT_FOUND));
 

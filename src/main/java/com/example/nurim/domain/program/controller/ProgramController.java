@@ -7,6 +7,7 @@ import com.example.nurim.domain.program.dto.responseDto.ProgramListRequestDto;
 import com.example.nurim.domain.program.dto.responseDto.ProgramRedisResponseDto;
 import com.example.nurim.domain.program.service.ProgramService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,16 +30,17 @@ public class ProgramController {
   }
 
   // 프로그램 하나의 모든 일정까지 조회
-  @GetMapping("/{programId}")
+  @GetMapping("/programs/{programId}")
   public ResponseEntity<ProgramDatesResponseDto> findAll(
       @PathVariable Long programId,
       @AuthenticationPrincipal AuthUser authUser) {
+
     ProgramDatesResponseDto programDatesResponseDto = programService.findAll(authUser.getId(), programId);
     return new ResponseEntity<>(programDatesResponseDto, HttpStatus.OK);
   }
 
   // 프로그램 하나의 모든 일정까지 조회(레디스)
-  @GetMapping("/{programId}/redis")
+  @GetMapping("/programs/{programId}/redis")
   public ResponseEntity<ProgramRedisResponseDto> findAllRedis(
       @PathVariable Long programId,
       @AuthenticationPrincipal AuthUser authUser) {
