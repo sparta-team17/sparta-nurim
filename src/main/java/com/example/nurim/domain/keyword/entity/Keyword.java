@@ -1,16 +1,15 @@
 package com.example.nurim.domain.keyword.entity;
 
+import com.example.nurim.domain.common.entity.Timestamped;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Getter
 @Entity
 @NoArgsConstructor
 @Table(name = "keywords")
-public class Keyword {
+public class Keyword extends Timestamped {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,13 +21,9 @@ public class Keyword {
     @Column(nullable = false)
     private Long searchCount = 0L;
 
-    @Column(name = "searched_at", nullable = false)
-    private LocalDateTime searchedAt;
-
-    public Keyword(String searchKeyword, Long searchCount, LocalDateTime searchedAt) {
+    public Keyword(String searchKeyword, Long searchCount) {
         this.searchKeyword = searchKeyword;
         this.searchCount = searchCount;
-        this.searchedAt = searchedAt;
     }
 
     public void incrementSearchCount() {
