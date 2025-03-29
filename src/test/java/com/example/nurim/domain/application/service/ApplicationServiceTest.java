@@ -72,6 +72,10 @@ class ApplicationServiceTest {
                 // 프로그램 등록 마감일을 미래로 설정
                 regEndField.set(program, LocalDateTime.now().plusDays(2));
 
+                Field regStartField = Program.class.getDeclaredField("registrationStartDate");
+                regStartField.setAccessible(true);
+                regStartField.set(program, LocalDateTime.now().minusDays(2));
+
                 Field quotaField = Program.class.getDeclaredField("quota");
                 quotaField.setAccessible(true);
                 quotaField.set(program, 10L);
@@ -89,7 +93,7 @@ class ApplicationServiceTest {
             given(userRepository.findById(anyLong())).willReturn(Optional.empty());
 
             CustomException thrown = assertThrows(CustomException.class, () ->
-                    applicationService.createApplication(authUser, programDateId));
+                    applicationService.createApplication(authUser.getId(), programDateId));
             assertEquals(ErrorCode.USER_NOT_FOUND, thrown.getErrorCode());
         }
 
@@ -100,14 +104,27 @@ class ApplicationServiceTest {
             given(programDateRepository.findById(anyLong())).willReturn(Optional.empty());
 
             CustomException thrown = assertThrows(CustomException.class, () ->
-                    applicationService.createApplication(authUser, programDateId));
+                    applicationService.createApplication(authUser.getId(), programDateId));
             assertEquals(ErrorCode.PROGRAM_DATE_NOT_FOUND, thrown.getErrorCode());
         }
 
         @Test
         @Order(3)
         void 신청_마감된_프로그램이면_실패() {
-            // 신청 마감 조건: 프로그램 일정 날짜가 과거이면 신청 불가
+            // 신청 마감 조건: 프로그램 접수 마감 일자가 과거이면 신청 불가
+            Program program = new Program();
+            try {
+                Field regEndField = Program.class.getDeclaredField("registrationEndDate");
+                regEndField.setAccessible(true);
+                regEndField.set(program, LocalDateTime.now().minusDays(2));
+
+                Field regStartField = Program.class.getDeclaredField("registrationStartDate");
+                regStartField.setAccessible(true);
+                regStartField.set(program, LocalDateTime.now().minusDays(3));
+            } catch (Exception e) {
+                fail("Program 초기화 실패: " + e.getMessage());
+            }
+
             ProgramDate pastProgramDate = new ProgramDate(program, LocalDateTime.now().minusDays(1));
 
             given(userRepository.findById(anyLong())).willReturn(Optional.of(user));
@@ -115,7 +132,7 @@ class ApplicationServiceTest {
             given(programDateRepository.findById(anyLong())).willReturn(Optional.of(pastProgramDate));
 
             CustomException thrown = assertThrows(CustomException.class, () ->
-                    applicationService.createApplication(authUser, programDateId));
+                    applicationService.createApplication(authUser.getId(), programDateId));
             assertEquals(ErrorCode.PROGRAM_DATE_CLOSED, thrown.getErrorCode());
         }
 
@@ -127,21 +144,27 @@ class ApplicationServiceTest {
             given(applicationRepository.existsByProgramDateIdAndUserId(anyLong(), anyLong())).willReturn(true);
 
             CustomException thrown = assertThrows(CustomException.class, () ->
-                    applicationService.createApplication(authUser, programDateId));
+                    applicationService.createApplication(authUser.getId(), programDateId));
             assertEquals(ErrorCode.DUPLICATE_APPLICATION, thrown.getErrorCode());
         }
 
         @Test
         @Order(5)
         void 선착순_신청_마감이면_실패() {
+            try {
+                Field countField = ProgramDate.class.getDeclaredField("count");
+                countField.setAccessible(true);
+                countField.set(programDate, 10);
+            } catch (Exception e) {
+                fail("ProgramDate 초기화 실패: " + e.getMessage());
+            }
+
             given(userRepository.findById(anyLong())).willReturn(Optional.of(user));
             given(programDateRepository.findById(anyLong())).willReturn(Optional.of(programDate));
             given(applicationRepository.existsByProgramDateIdAndUserId(anyLong(), anyLong())).willReturn(false);
-            // 신청된 수가 quota와 같으면 선착순 신청 마감 처리
-            given(applicationRepository.countByProgramDateId(anyLong())).willReturn((long) getProgramQuota(program));
 
             CustomException thrown = assertThrows(CustomException.class, () ->
-                    applicationService.createApplication(authUser, programDateId));
+                    applicationService.createApplication(authUser.getId(), programDateId));
             assertEquals(ErrorCode.APPLICATION_FULL, thrown.getErrorCode());
         }
 
@@ -151,19 +174,18 @@ class ApplicationServiceTest {
             given(userRepository.findById(anyLong())).willReturn(Optional.of(user));
             given(programDateRepository.findById(anyLong())).willReturn(Optional.of(programDate));
             given(applicationRepository.existsByProgramDateIdAndUserId(anyLong(), anyLong())).willReturn(false);
-            given(applicationRepository.countByProgramDateId(anyLong())).willReturn(0L);
 
             // 저장 시 입력값 그대로 반환하도록 설정
             when(applicationRepository.save(any(Application.class)))
                     .thenAnswer(invocation -> invocation.getArgument(0));
-            when(programDateRepository.save(any(ProgramDate.class)))
+            when(programDateRepository.saveAndFlush(any(ProgramDate.class)))
                     .thenAnswer(invocation -> invocation.getArgument(0));
 
-            ApplicationResponseDto response = applicationService.createApplication(authUser, programDateId);
+            ApplicationResponseDto response = applicationService.createApplication(authUser.getId(), programDateId);
 
             assertNotNull(response);
             verify(applicationRepository, times(1)).save(any(Application.class));
-            verify(programDateRepository, times(1)).save(any(ProgramDate.class));
+            verify(programDateRepository, times(1)).saveAndFlush(any(ProgramDate.class));
         }
 
         private int getProgramQuota(Program program) {
