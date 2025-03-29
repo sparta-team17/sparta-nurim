@@ -66,7 +66,7 @@ public class ProgramService {
     programRepository.save(program);
 
     List<ProgramDate> programDateList = new ArrayList<>();
-    // 선택된 일정들로 PromgramDate 객체 생성
+    // 선택된 일정들로 PromgramDate 생성
     for (LocalDateTime date : requestDto.getUsageDates()) {
       programDateList.add(new ProgramDate(program, date));
     }
@@ -87,9 +87,9 @@ public class ProgramService {
     );
   }
 
-  @Transactional
 
   // 프로그램 목록 조회
+  @Transactional
   public Page<ProgramListRequestDto> findProgramList(ProgramSearchRequestDto requestDto) {
     Pageable pageable = PageRequest.of(requestDto.getPage() - 1, requestDto.getSize());
 
@@ -109,7 +109,7 @@ public class ProgramService {
     );
   }
 
-  // 프로그램의 일정 조회
+  // 프로그램 상세 조회(프로그램에 포함된 일정까지 조회)
   @Transactional
   public ProgramDatesResponseDto findAll(Long userId, Long programId) {
     Program findProgram = programRepository.findByIdAndDeletedAtIsNull(programId)
@@ -153,7 +153,7 @@ public class ProgramService {
     );
   }
 
-  // 레디스 사용 프로그램 일정 조회
+  // Redis로 프로그램 상세 조회(프로그램에 포함된 일정까지 조회)
   public ProgramRedisResponseDto findAllRedis(Long userId, Long programId) {
     Program findProgram = programRepository.findByIdAndDeletedAtIsNull(programId)
         .orElseThrow(() -> new CustomException(ErrorCode.PROGRAM_NOT_FOUND));
@@ -274,7 +274,7 @@ public class ProgramService {
     List<ProgramDate> programDateList = programDateRepository.findAllByStatus(ProgramDateStatus.RECRUITING);
     for (ProgramDate date : programDateList) {
       if (date.getCount() >= date.getProgram().getQuota()) {
-        date.updateClose(ProgramDateStatus.CLOSED);
+        date.updateStaus(ProgramDateStatus.CLOSED);
       }
     }
     // 프로그램 상태 변경
@@ -303,16 +303,16 @@ public class ProgramService {
   }
 
   // 프로그램 조회수 증가(Redis)
-  private void incrementViewCount(Long programId, Long userId) {
+  public void incrementViewCount(Long programId, Long userId) {
     String date = LocalDate.now().toString();
     // 유저가 오늘 이 프로그램 조회했는지 확인용도
     String abuseKey = "viewed:program:" + programId + ":user:" + userId + ":" + date;
     // 조회수 관리 키
     String viewKey = "program:" + programId + ":views:" + date;
-
+    // 중복 방지키를 가지고 있지 않으면 조회수 증가
     Boolean isViewed = redisTemplate.hasKey(abuseKey);
     if (Boolean.FALSE.equals(isViewed)) {
-      redisTemplate.opsForValue().increment(viewKey, 1); // 조회수 +!
+      redisTemplate.opsForValue().increment(viewKey, 1);
       // 오늘 자정까지만 중복 방지(내일은 다시 조회수 증가 가능)
       LocalDateTime now = LocalDateTime.now();
       LocalDateTime midnight = now.toLocalDate().plusDays(1).atStartOfDay();
@@ -325,7 +325,7 @@ public class ProgramService {
   }
 
   // 프로그램 조회수 조회(Redis)
-  private Long getViewCount(Long programId) {
+  public Long getViewCount(Long programId) {
     String date = LocalDate.now().toString();
     String viewKey = "program:" + programId + ":views:" + date;
     Object value = redisTemplate.opsForValue().get(viewKey);
