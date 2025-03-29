@@ -25,10 +25,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ApplicationConcurrencyControlTest {
 
+    @Autowired
+    private ApplicationRepository applicationRepository;
     @Autowired
     private ApplicationService applicationService;
     @Autowired
@@ -39,8 +43,6 @@ class ApplicationConcurrencyControlTest {
     private ProgramDateRepository programDateRepository;
     @Autowired
     private UserRepository userRepository;
-    @Autowired
-    private ApplicationRepository applicationRepository;
 
     private Long programDateId;
     private Program program;
@@ -66,18 +68,16 @@ class ApplicationConcurrencyControlTest {
     }
 
     @AfterAll
-    void tearDown() {
+    void afterAll() {
         applicationRepository.deleteAll();
-        programDateRepository.deleteAll();
         userRepository.deleteAll();
+        programDateRepository.deleteAll();
         programRepository.deleteAll();
         categoryRepository.deleteAll();
     }
 
     @Test
-    void 프로그램_동시_신청_비관적_락_사용() throws InterruptedException {
-        Long quota = program.getQuota();
-
+    void 프로그램_동시_신청_분산락_사용() throws InterruptedException {
         AtomicInteger successCount = new AtomicInteger();
         AtomicInteger failCount = new AtomicInteger();
 
@@ -98,9 +98,13 @@ class ApplicationConcurrencyControlTest {
         }
 
         countDownLatch.await();
+        executorService.shutdown();
 
-        System.out.println("quota: " + quota);
+        System.out.println("quota: " + program.getQuota());
         System.out.println("successCount: " + successCount.get());
         System.out.println("failCount: " + failCount.get());
+
+        ProgramDate programDate = programDateRepository.findById(programDateId).get();
+        assertEquals(successCount.get(), programDate.getCount());
     }
 }

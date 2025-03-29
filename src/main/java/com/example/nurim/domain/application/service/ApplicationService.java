@@ -4,6 +4,8 @@ import com.example.nurim.domain.application.dto.response.ApplicationResponseDto;
 import com.example.nurim.domain.application.entity.Application;
 import com.example.nurim.domain.application.enums.ApplicationStatus;
 import com.example.nurim.domain.application.repository.ApplicationRepository;
+import com.example.nurim.domain.common.annotation.DistributedLock;
+import com.example.nurim.domain.common.annotation.LockKey;
 import com.example.nurim.domain.common.dto.AuthUser;
 import com.example.nurim.domain.common.exception.CustomException;
 import com.example.nurim.domain.common.exception.ErrorCode;
@@ -26,14 +28,17 @@ public class ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final ProgramDateRepository programDateRepository;
 
+    private static final String LOCK_KEY_PREFIX = "program-date-lock";
+
+    @DistributedLock(LOCK_KEY_PREFIX)
     @Transactional
-    public ApplicationResponseDto createApplication(Long userId, Long programDateId) {
+    public ApplicationResponseDto createApplication(Long userId, @LockKey Long programDateId) {
         // 사용자 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 프로그램 일정 조회
-        ProgramDate programDate = programDateRepository.findByIdWithPessimisticLock(programDateId)
+        ProgramDate programDate = programDateRepository.findById(programDateId)
                 .orElseThrow(()-> new CustomException(ErrorCode.PROGRAM_DATE_NOT_FOUND));
 
         // 프로그램 신청 가능 여부 확인 (접수 종료일 기준)
@@ -54,8 +59,7 @@ public class ApplicationService {
         }
 
         // 선착순 신청 확인 (최대 인원 인원 수)
-        long currentApplicationsCount = programDate.getCount();
-        if (currentApplicationsCount >= program.getQuota()) {
+        if (programDate.getCount() >= program.getQuota()) {
             throw new CustomException(ErrorCode.APPLICATION_FULL);
         }
 
@@ -72,7 +76,7 @@ public class ApplicationService {
 
         // 신청 완료 후 ProgramDate.count 증가
         programDate.incrementCount();
-        programDateRepository.save(programDate);
+        programDateRepository.saveAndFlush(programDate);
 
         return new ApplicationResponseDto(application);
     }
