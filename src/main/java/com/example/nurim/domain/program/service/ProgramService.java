@@ -11,21 +11,27 @@ import com.example.nurim.domain.program.dto.responseDto.*;
 import com.example.nurim.domain.program.entity.Category;
 import com.example.nurim.domain.program.entity.Program;
 import com.example.nurim.domain.program.entity.ProgramDate;
+import com.example.nurim.domain.program.entity.ProgramView;
 import com.example.nurim.domain.program.enums.ProgramDateStatus;
 import com.example.nurim.domain.program.enums.ProgramStatus;
 import com.example.nurim.domain.program.repository.CategoryRepository;
 import com.example.nurim.domain.program.repository.ProgramDateRepository;
 import com.example.nurim.domain.program.repository.ProgramRepository;
+import com.example.nurim.domain.program.repository.ProgramViewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +39,9 @@ public class ProgramService {
   private final ProgramRepository programRepository;
   private final CategoryRepository categoryRepository;
   private final ProgramDateRepository programDateRepository;
+  private final RedisTemplate<String, String> redisTemplate;
+  private final ProgramViewRepository programViewRepository;
+
   private final KeywordRepository keywordRepository;
 
   // 프로그램 등록
@@ -57,7 +66,7 @@ public class ProgramService {
     programRepository.save(program);
 
     List<ProgramDate> programDateList = new ArrayList<>();
-    // 선택된 일정들로 PromgramDate 객체 생성
+    // 선택된 일정들로 PromgramDate 생성
     for (LocalDateTime date : requestDto.getUsageDates()) {
       programDateList.add(new ProgramDate(program, date));
     }
@@ -78,8 +87,9 @@ public class ProgramService {
     );
   }
 
-  @Transactional
+
   // 프로그램 목록 조회
+  @Transactional
   public Page<ProgramListRequestDto> findProgramList(ProgramSearchRequestDto requestDto) {
     Pageable pageable = PageRequest.of(requestDto.getPage() - 1, requestDto.getSize());
 
@@ -99,10 +109,21 @@ public class ProgramService {
     );
   }
 
-  // 프로그램의 일정 조회
-  public ProgramDatesResponseDto findAll(Long programId) {
+  // 프로그램 상세 조회(프로그램에 포함된 일정까지 조회)
+  @Transactional
+  public ProgramDatesResponseDto findAll(Long userId, Long programId) {
+
     Program findProgram = programRepository.findByIdAndDeletedAtIsNull(programId)
         .orElseThrow(() -> new CustomException(ErrorCode.PROGRAM_NOT_FOUND));
+
+    // 중복 조회 방지 + 조회수 증가 (유저가 같은 프로그램을 이미 조회했는지 확인)
+    boolean alreadyViewed = programViewRepository.existsByUserIdAndProgramId(userId, programId);
+    if (!alreadyViewed) {
+      programViewRepository.save(new ProgramView(programId, userId));
+      programRepository.incrementViewCount(programId);
+    }
+
+    Long viewCount = programRepository.getViewCount(programId);
 
     List<ProgramDate> programDates = programDateRepository.findAllByProgram(findProgram);
 
@@ -128,7 +149,46 @@ public class ProgramService {
         findProgram.getQuota(),
         findProgram.getRegistrationStartDate(),
         findProgram.getRegistrationEndDate(),
-        programDateInfoDtos
+        programDateInfoDtos,
+        viewCount
+    );
+  }
+
+  // Redis로 프로그램 상세 조회(프로그램에 포함된 일정까지 조회)
+  public ProgramRedisResponseDto findAllRedis(Long userId, Long programId) {
+    Program findProgram = programRepository.findByIdAndDeletedAtIsNull(programId)
+        .orElseThrow(() -> new CustomException(ErrorCode.PROGRAM_NOT_FOUND));
+    // 프로그램에 등록된 모든 일정 조회
+    List<ProgramDate> programDates = programDateRepository.findAllByProgram(findProgram);
+    List<ProgramDateInfoDto> programDateInfoDtos = new ArrayList<>();
+
+    for (ProgramDate date : programDates) {
+      ProgramDateInfoDto programDateInfoDto = new ProgramDateInfoDto(
+          date.getDate().toLocalDate(),
+          date.getCount(),
+          findProgram.getQuota(),
+          date.getStatus()
+      );
+      programDateInfoDtos.add(programDateInfoDto);
+    }
+
+    // Redis에서 조회수 증가
+    incrementViewCount(programId, userId);
+    // Redis에서 조회수 가져오기
+    Long viewCount = getViewCount(programId);
+
+    return new ProgramRedisResponseDto(
+        findProgram.getId(),
+        findProgram.getTitle(),
+        findProgram.getLocation(),
+        findProgram.getDetail(),
+        findProgram.getPhone(),
+        findProgram.getStatus(),
+        findProgram.getQuota(),
+        findProgram.getRegistrationStartDate(),
+        findProgram.getRegistrationEndDate(),
+        programDateInfoDtos,
+        viewCount
     );
   }
 
@@ -215,7 +275,7 @@ public class ProgramService {
     List<ProgramDate> programDateList = programDateRepository.findAllByStatus(ProgramDateStatus.RECRUITING);
     for (ProgramDate date : programDateList) {
       if (date.getCount() >= date.getProgram().getQuota()) {
-        date.updateClose(ProgramDateStatus.CLOSED);
+        date.updateStaus(ProgramDateStatus.CLOSED);
       }
     }
     // 프로그램 상태 변경
@@ -233,7 +293,7 @@ public class ProgramService {
     }
   }
 
-  // 모든 일정 closed인지 체크 ( 하나라도 모집중 있으면 false)
+  // 모든 일정 closed인지 체크하는 메서드 ( 하나라도 모집중 있으면 false)
   private boolean isAllDatesClosed(List<ProgramDate> dateList) {
     for (ProgramDate date : dateList) {
       if (date.getStatus() != ProgramDateStatus.CLOSED) {
@@ -241,6 +301,60 @@ public class ProgramService {
       }
     }
     return true;
+  }
+
+  // 프로그램 조회수 증가(Redis)
+  public void incrementViewCount(Long programId, Long userId) {
+    String date = LocalDate.now().toString();
+    // 유저가 오늘 이 프로그램 조회했는지 확인용도
+    String abuseKey = "viewed:program:" + programId + ":user:" + userId + ":" + date;
+    // 조회수 관리 키
+    String viewKey = "program:" + programId + ":views:" + date;
+    // 중복 방지키를 가지고 있지 않으면 조회수 증가
+    Boolean isViewed = redisTemplate.hasKey(abuseKey);
+    if (Boolean.FALSE.equals(isViewed)) {
+      redisTemplate.opsForValue().increment(viewKey, 1);
+      // 오늘 자정까지만 중복 방지(내일은 다시 조회수 증가 가능)
+      LocalDateTime now = LocalDateTime.now();
+      LocalDateTime midnight = now.toLocalDate().plusDays(1).atStartOfDay();
+      Duration untilMidnight = Duration.between(now, midnight);
+      redisTemplate.opsForValue().set(abuseKey, "viewed", untilMidnight);
+      // 프로그램 랭킹 업데이트
+      String rankingKey = "program:ranking:" + date;
+      redisTemplate.opsForZSet().incrementScore(rankingKey, "program:" + programId, 1);
+    }
+  }
+
+  // 프로그램 조회수 조회(Redis)
+  public Long getViewCount(Long programId) {
+    String date = LocalDate.now().toString();
+    String viewKey = "program:" + programId + ":views:" + date;
+    Object value = redisTemplate.opsForValue().get(viewKey);
+    return value != null ? Long.parseLong(value.toString()) : 0L;
+  }
+
+  // 자정지나면 조회수 초기화
+  public void resetProgramViewCounts() {
+    String yesterday = LocalDate.now().minusDays(1).toString();
+
+    List<Long> allProgramIds = programRepository.findAllProgramIds();
+
+    for (Long programId : allProgramIds) {
+      String key = "program:" + programId + ":views:" + yesterday;
+      redisTemplate.delete(key);
+    }
+  }
+
+  // 프로그램 랭킹 조회(5위까지만)
+  public List<String> findProgramRangking() {
+    String date = LocalDate.now().toString();
+    String rankingKey = "program:ranking:" + date;
+
+    Set<String> topPrograms = redisTemplate.opsForZSet()
+        .reverseRange(rankingKey, 0, 4);
+
+    return topPrograms != null ? new ArrayList<>(topPrograms) : new ArrayList<>();
+
   }
 
   // 검색 횟수를 증가시키고 저장
@@ -255,3 +369,5 @@ public class ProgramService {
     keywordRepository.save(newKeyword);
   }
 }
+
+

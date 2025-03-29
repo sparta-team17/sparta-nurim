@@ -1,6 +1,7 @@
 package com.example.nurim.domain.program.service;
 
 import com.example.nurim.domain.common.exception.CustomException;
+import com.example.nurim.domain.keyword.repository.KeywordRepository;
 import com.example.nurim.domain.program.dto.requestDto.ProgramRequestDto;
 import com.example.nurim.domain.program.dto.requestDto.ProgramSearchRequestDto;
 import com.example.nurim.domain.program.dto.requestDto.ProgramUpdateRequestDto;
@@ -13,6 +14,7 @@ import com.example.nurim.domain.program.enums.ProgramStatus;
 import com.example.nurim.domain.program.repository.CategoryRepository;
 import com.example.nurim.domain.program.repository.ProgramDateRepository;
 import com.example.nurim.domain.program.repository.ProgramRepository;
+import com.example.nurim.domain.program.repository.ProgramViewRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,20 +22,23 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
 
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProgramServiceTest {
@@ -41,10 +46,25 @@ class ProgramServiceTest {
   private ProgramRepository programRepository;
 
   @Mock
+  private KeywordRepository keywordRepository;
+
+  @Mock
   private CategoryRepository categoryRepository;
 
   @Mock
   private ProgramDateRepository programDateRepository;
+
+  @Mock
+  private ProgramViewRepository programViewRepository;
+
+  @Mock
+  RedisTemplate<String, Object> redisTemplate;
+
+  @Mock
+  ValueOperations<String, Object> valueOps;
+
+  @Mock
+  ZSetOperations<String, Object> zSetOps;
 
   @InjectMocks
   private ProgramService programService;
@@ -142,6 +162,7 @@ class ProgramServiceTest {
 
   @Test
   void 프로그램_일정_조회_성공() {
+    Long userId = 123L;
     Long programId = 1L;
     Category category = new Category("코딩");
 
@@ -162,8 +183,12 @@ class ProgramServiceTest {
     );
 
     when(programRepository.findByIdAndDeletedAtIsNull(programId)).thenReturn(Optional.of(program));
+    when(programDateRepository.findAllByProgram(program)).thenReturn(programDateList);
+    when(programRepository.getViewCount(programId)).thenReturn(5L);
 
-    ProgramDatesResponseDto result = programService.findAll(programId);
+    when(programViewRepository.existsByUserIdAndProgramId(userId, programId)).thenReturn(false);
+
+    ProgramDatesResponseDto result = programService.findAll(userId, programId);
 
     assertNotNull(result);
     assertEquals(program.getTitle(), result.getTitle());
@@ -171,12 +196,12 @@ class ProgramServiceTest {
 
   @Test
   void ProgramId를_조회하지_못해서_일정_조회_실패() {
-
+    Long userId = 123L;
     Long programId = 1L;
     when(programRepository.findByIdAndDeletedAtIsNull(programId)).thenReturn(Optional.empty());
 
     CustomException exception = assertThrows(CustomException.class, () -> {
-      programService.findAll(programId);
+      programService.findAll(userId, programId);
     });
     assertEquals("존재하지 않는 프로그램입니다.", exception.getMessage());
   }
@@ -457,10 +482,10 @@ class ProgramServiceTest {
     );
     // 일정2개 생성(마감으로)
     ProgramDate programDate1 = new ProgramDate(program, LocalDateTime.of(2025, 3, 5, 10, 0));
-    programDate1.updateClose(ProgramDateStatus.CLOSED);
+    programDate1.updateStaus(ProgramDateStatus.CLOSED);
 
     ProgramDate programDate2 = new ProgramDate(program, LocalDateTime.of(2025, 3, 6, 10, 0));
-    programDate2.updateClose(ProgramDateStatus.CLOSED);
+    programDate2.updateStaus(ProgramDateStatus.CLOSED);
 
     when(programRepository.findAllByDeletedAtIsNull()).thenReturn(List.of(program));
     when(programDateRepository.findAllByProgram(program)).thenReturn(List.of(programDate1, programDate2));
@@ -500,4 +525,56 @@ class ProgramServiceTest {
     assertEquals(ProgramStatus.COMPLETE, program.getStatus());
 
   }
+
+  @Test
+  void 조회수가_정상적으로_증가() {
+    Long programId = 1L;
+    Long userId = 1L;
+    String date = LocalDate.now().toString();
+
+    String abuseKey = "viewed:program:" + programId + ":user:" + userId + ":" + date;
+    String viewKey = "program:" + programId + ":views:" + date;
+    String rankingKey = "program:ranking:" + date;
+
+    when(redisTemplate.hasKey(abuseKey)).thenReturn(false); // 조회한적 없다고 가정
+    when(redisTemplate.opsForValue()).thenReturn(valueOps);
+    when(redisTemplate.opsForZSet()).thenReturn(zSetOps);
+
+    programService.incrementViewCount(programId, userId);
+
+    verify(valueOps).increment(viewKey, 1);
+    verify(zSetOps).incrementScore(rankingKey, "program:" + programId, 1);
+
+  }
+
+  @Test
+  void 중복방지키를_가지고_있어서_조회수_증가_안됨() {
+    Long programId = 1L;
+    Long userId = 1L;
+    String date = LocalDate.now().toString();
+
+    String abuseKey = "viewed:program:" + programId + ":user:" + userId + ":" + date;
+    when(redisTemplate.hasKey(abuseKey)).thenReturn(true);
+    programService.incrementViewCount(programId, userId);
+
+    verify(valueOps, never()).increment(any(), anyLong());
+
+  }
+
+  @Test
+  void 조회수가_정상적으로_조회() {
+    Long programId = 1L;
+    String date = LocalDate.now().toString();
+    String viewKey = "program:" + programId + ":views:" + date;
+
+    when(redisTemplate.opsForValue()).thenReturn(valueOps);
+    when(valueOps.get(viewKey)).thenReturn("2");
+
+    Long result = programService.getViewCount(programId);
+
+    assertEquals(2L, result);
+  }
+
+
 }
+
