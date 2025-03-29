@@ -2,10 +2,14 @@ package com.example.nurim.domain.application.service;
 
 import com.example.nurim.domain.application.dto.response.ApplicationResponseDto;
 import com.example.nurim.domain.application.entity.Application;
+import com.example.nurim.domain.application.enums.ApplicationStatus;
 import com.example.nurim.domain.application.repository.ApplicationRepository;
+import com.example.nurim.domain.common.annotation.DistributedLock;
+import com.example.nurim.domain.common.annotation.LockKey;
 import com.example.nurim.domain.common.dto.AuthUser;
 import com.example.nurim.domain.common.exception.CustomException;
 import com.example.nurim.domain.common.exception.ErrorCode;
+import com.example.nurim.domain.program.entity.Program;
 import com.example.nurim.domain.program.entity.ProgramDate;
 import com.example.nurim.domain.program.repository.ProgramDateRepository;
 import com.example.nurim.domain.user.entity.User;
@@ -24,10 +28,13 @@ public class ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final ProgramDateRepository programDateRepository;
 
+    private static final String LOCK_KEY_PREFIX = "program-date-lock";
+
+    @DistributedLock(LOCK_KEY_PREFIX)
     @Transactional
-    public ApplicationResponseDto createApplication(AuthUser authUser, Long programDateId) {
+    public ApplicationResponseDto createApplication(Long userId, @LockKey Long programDateId) {
         // 사용자 조회
-        User user = userRepository.findById(authUser.getId())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 프로그램 일정 조회
@@ -35,17 +42,24 @@ public class ApplicationService {
                 .orElseThrow(()-> new CustomException(ErrorCode.PROGRAM_DATE_NOT_FOUND));
 
         // 프로그램 신청 가능 여부 확인 (접수 종료일 기준)
-        if (programDate.getDate().isBefore(LocalDateTime.now())) {
+        Program program = programDate.getProgram();
+        LocalDateTime now = LocalDateTime.now();
+
+        if (program.getRegistrationStartDate().isAfter(now)) {
+            throw new CustomException(ErrorCode.PROGRAM_DATE_NOT_OPENED);
+        }
+
+        if (program.getRegistrationEndDate().isBefore(now)) {
             throw new CustomException(ErrorCode.PROGRAM_DATE_CLOSED); // 접수 종료 후 신청 불가
         }
+
         // 중복 신청 방지
         if (applicationRepository.existsByProgramDateIdAndUserId(programDateId, user.getId())) {
             throw new CustomException(ErrorCode.DUPLICATE_APPLICATION);
         }
 
         // 선착순 신청 확인 (최대 인원 인원 수)
-        long currentApplicationsCount = applicationRepository.countByProgramDateId(programDateId);
-        if (currentApplicationsCount >= programDate.getProgram().getQuota()) {
+        if (programDate.getCount() >= program.getQuota()) {
             throw new CustomException(ErrorCode.APPLICATION_FULL);
         }
 
@@ -53,13 +67,16 @@ public class ApplicationService {
         Application application = Application.builder()
                         .user(user)
                         .programDate(programDate)
+                        .status(ApplicationStatus.COMPLETE)
+                        .useDate(programDate.getDate())
+                        .isReviewd(false)
                         .build();
 
         applicationRepository.save(application);
 
         // 신청 완료 후 ProgramDate.count 증가
         programDate.incrementCount();
-        programDateRepository.save(programDate);
+        programDateRepository.saveAndFlush(programDate);
 
         return new ApplicationResponseDto(application);
     }
