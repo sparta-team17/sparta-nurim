@@ -1,6 +1,7 @@
 package com.example.nurim.domain.program.service;
 
 import com.example.nurim.domain.common.exception.CustomException;
+import com.example.nurim.domain.keyword.service.KeywordService;
 import com.example.nurim.domain.keyword.repository.KeywordRepository;
 import com.example.nurim.domain.program.dto.requestDto.ProgramRequestDto;
 import com.example.nurim.domain.program.dto.requestDto.ProgramSearchRequestDto;
@@ -27,17 +28,16 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,6 +55,8 @@ class ProgramServiceTest {
   private ProgramDateRepository programDateRepository;
 
   @Mock
+  private KeywordService keywordService;
+
   private ProgramViewRepository programViewRepository;
 
   @Mock
@@ -153,11 +155,12 @@ class ProgramServiceTest {
     when(programRepository.findProgramList(any(), any(), any(), any()))
         .thenReturn(mockPage);
 
-    Page<ProgramListRequestDto> result = programService.findProgramList(requestDto);
+    Page<ProgramListRequestDto> result = programService.findProgramListV1(requestDto);
 
     assertNotNull(result);
     assertEquals(title, result.getContent().get(0).getTitle());
 
+    verify(keywordService, times(1)).createKeyword(anyString());
   }
 
   @Test

@@ -22,10 +22,17 @@ public class ProgramController {
 
   private final ProgramService programService;
 
-  // 프로그램 전체 목록 조회
+  // 프로그램 전체 목록 조회 V1
   @GetMapping({"/v1/programs/search"})
-  public ResponseEntity<Page<ProgramListRequestDto>> findProgramList(@ModelAttribute ProgramSearchRequestDto requestDto){
-    Page<ProgramListRequestDto> programList = programService.findProgramList(requestDto);
+  public ResponseEntity<Page<ProgramListRequestDto>> findProgramListV1(@ModelAttribute ProgramSearchRequestDto requestDto){
+    Page<ProgramListRequestDto> programList = programService.findProgramListV1(requestDto);
+    return new ResponseEntity<>(programList,HttpStatus.OK);
+  }
+
+  // 프로그램 전체 목록 조회 V2
+  @GetMapping({"/v2/programs/search"})
+  public ResponseEntity<Page<ProgramListRequestDto>> findProgramListV2(@ModelAttribute ProgramSearchRequestDto requestDto){
+    Page<ProgramListRequestDto> programList = programService.findProgramListV2(requestDto);
     return new ResponseEntity<>(programList,HttpStatus.OK);
   }
 

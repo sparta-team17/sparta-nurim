@@ -2,8 +2,8 @@ package com.example.nurim.domain.program.service;
 
 import com.example.nurim.domain.common.exception.CustomException;
 import com.example.nurim.domain.common.exception.ErrorCode;
-import com.example.nurim.domain.keyword.entity.Keyword;
 import com.example.nurim.domain.keyword.repository.KeywordRepository;
+import com.example.nurim.domain.keyword.service.KeywordService;
 import com.example.nurim.domain.program.dto.requestDto.ProgramRequestDto;
 import com.example.nurim.domain.program.dto.requestDto.ProgramSearchRequestDto;
 import com.example.nurim.domain.program.dto.requestDto.ProgramUpdateRequestDto;
@@ -19,6 +19,7 @@ import com.example.nurim.domain.program.repository.ProgramDateRepository;
 import com.example.nurim.domain.program.repository.ProgramRepository;
 import com.example.nurim.domain.program.repository.ProgramViewRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +37,7 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class ProgramService {
+  private final KeywordService keywordService;
   private final ProgramRepository programRepository;
   private final CategoryRepository categoryRepository;
   private final ProgramDateRepository programDateRepository;
@@ -87,19 +89,12 @@ public class ProgramService {
     );
   }
 
-
   // 프로그램 목록 조회
   @Transactional
   public Page<ProgramListRequestDto> findProgramList(ProgramSearchRequestDto requestDto) {
     Pageable pageable = PageRequest.of(requestDto.getPage() - 1, requestDto.getSize());
 
-    if (requestDto.getTitle() != null) {
-      keywordRepository.findKeywordBySearchKeyword(requestDto.getTitle())
-              .ifPresentOrElse(
-                  this::incrementAndSaveKeyword,
-                  () -> saveNewKeyword(requestDto.getTitle())
-              );
-    }
+    keywordService.createKeyword(requestDto.getTitle());
 
     return programRepository.findProgramList(
         requestDto.getTitle(),
@@ -109,6 +104,23 @@ public class ProgramService {
     );
   }
 
+  // 프로그램 목록 조회 V2
+  @Transactional
+  @Cacheable(value = "findProgramList", keyGenerator = "programListKeyGenerator")
+  public Page<ProgramListRequestDto> findProgramListV2(ProgramSearchRequestDto requestDto) {
+    Pageable pageable = PageRequest.of(requestDto.getPage() - 1, requestDto.getSize());
+
+    keywordService.createKeyword(requestDto.getTitle());
+
+    return programRepository.findProgramList(
+            requestDto.getTitle(),
+            requestDto.getLocation(),
+            requestDto.getStatus(),
+            pageable
+    );
+  }
+
+ 
   // 프로그램 상세 조회(프로그램에 포함된 일정까지 조회)
   @Transactional
   public ProgramDatesResponseDto findAll(Long userId, Long programId) {
