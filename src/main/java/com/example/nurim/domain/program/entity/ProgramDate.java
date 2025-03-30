@@ -5,10 +5,12 @@ import com.example.nurim.domain.program.enums.ProgramDateStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Getter
+@Setter
 @Entity
 @NoArgsConstructor
 @Table(name = "program_date")
