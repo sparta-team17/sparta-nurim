@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  app:
+    image: openjdk:17
+    container_name: nurim-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://nurim-database.cdm8so88aqjv.ap-northeast-2.rds.amazonaws.com:3306/nurim
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=SBrhWETJToG7NcX
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL=true
+      - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
+      - SPRING_JPA_PROPERTIES_HIBERNATE_USE_SQL_COMMENTS=true
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
+      - JWT_SECRET_KEY=dm5tUVFDRU9wOFdDNGgxWjQ5M3Z5NHM5Z0tEU1hEOVg=
+      - JWT_ACCESS_EXPIRATION=86400000
+      - JWT_REFRESH_EXPIRATION=86400000
+      - SPRING_DATA_REDIS_HOST=nurim-redis.tbhw8v.ng.0001.apn2.cache.amazonaws.com
+      - SPRING_DATA_REDIS_PORT=6379
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+    driver: bridge
