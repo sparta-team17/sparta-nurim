@@ -6,7 +6,15 @@ import org.springframework.cache.concurrent.ConcurrentMapCache;
 import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.cache.RedisCacheManager;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import java.time.Duration;
 import java.util.List;
 
 @Configuration
@@ -14,11 +22,14 @@ import java.util.List;
 public class CacheConfig {
 
     @Bean
-    public CacheManager cacheManager() {
-        SimpleCacheManager simpleCacheManager = new SimpleCacheManager();
-        simpleCacheManager.setCaches(List.of(new ConcurrentMapCache("findProgramList")));
-        simpleCacheManager.initializeCaches();
+    public CacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
+        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+            .entryTtl(Duration.ofMinutes(10))
+            .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
+            .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new JdkSerializationRedisSerializer()));
 
-        return simpleCacheManager;
+        return RedisCacheManager.builder(redisConnectionFactory)
+            .cacheDefaults(config)
+            .build();
     }
 }

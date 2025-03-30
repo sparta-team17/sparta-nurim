@@ -4,11 +4,14 @@ import com.example.nurim.domain.program.enums.ProgramStatus;
 import com.querydsl.core.annotations.QueryProjection;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Getter
-public class ProgramListRequestDto {
+@NoArgsConstructor
+public class ProgramListRequestDto implements Serializable {
   private Long id;
   private String title;
   private String location;
@@ -18,7 +21,7 @@ public class ProgramListRequestDto {
   private LocalDateTime registrationStartDate;
   private LocalDateTime registrationEndDate;
 
-  public ProgramListRequestDto(Long id, String title, String location, String category, ProgramStatus status,
+  public ProgramListRequestDto (Long id, String title, String location, String category, ProgramStatus status,
                                Long quota, LocalDateTime registrationStartDate, LocalDateTime registrationEndDate) {
     this.id = id;
     this.title = title;
