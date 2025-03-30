@@ -2,6 +2,7 @@ package com.example.nurim.domain.program.service;
 
 import com.example.nurim.domain.common.exception.CustomException;
 import com.example.nurim.domain.common.exception.ErrorCode;
+import com.example.nurim.domain.keyword.entity.Keyword;
 import com.example.nurim.domain.keyword.repository.KeywordRepository;
 import com.example.nurim.domain.keyword.service.KeywordService;
 import com.example.nurim.domain.program.dto.requestDto.ProgramRequestDto;
@@ -91,7 +92,7 @@ public class ProgramService {
 
   // 프로그램 목록 조회
   @Transactional
-  public Page<ProgramListRequestDto> findProgramList(ProgramSearchRequestDto requestDto) {
+  public Page<ProgramListRequestDto> findProgramListV1(ProgramSearchRequestDto requestDto) {
     Pageable pageable = PageRequest.of(requestDto.getPage() - 1, requestDto.getSize());
 
     keywordService.createKeyword(requestDto.getTitle());
